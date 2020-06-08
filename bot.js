@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const client  = new Discord.Client();
 const conf    = require('./configs');
 const db      = require('./mods/db');
+const fs      = require('fs');
 
 
 
@@ -71,6 +72,29 @@ function handlerr(err) {
     if (err) {
         console.error(err.message);
     }
+}
+
+
+// recurrent tasks
+setInterval(workloop, 1000);
+
+
+function workloop() {
+    // we look for a new user
+    db.get("select * from users where state = 'new' and did = '396752710487113729' limit 1", [], (err, row) => {
+        if (err) return console.error(err.message);
+
+        if (! row) return;
+
+        console.log(row);
+
+        const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8').replace('##username##', row.discord_name);
+        // let user = client.users.cache.get(row.did);
+        let user = client.users.cache.get('396752710487113729');
+        console.log(user);
+        user.send(msgWelcome);
+        // db.run("update users set state = 'welcomed' where did = ?", [row.did]);
+    })
 }
 
 
