@@ -3,6 +3,7 @@ const client  = new Discord.Client();
 const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
+const log     = require('./log');
 
 const bot = {};
 
@@ -87,43 +88,56 @@ bot.welcome = function() {
 
         if (! row) return;
 
-        console.log(row);
-
         const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8')
             .replace(/##username##/g, row.discord_name)
             .replace(/##botname##/g, client.user.username);
+
         let user = client.users.cache.get(row.did);
         if (! user) {
-            console.error("Impossible de trouver l'utilisateur ", row);
+            log.error("Impossible de trouver l'utilisateur "+ row.did);
             return;
         }
-        user.send(msgWelcome);
+
+        sendDirectMessage(user, msgWelcome);
         db.run("update users set state = 'welcomed' where did = ?", [row.did]);
     })
+}
+
+/**
+ * Sends message msg to user destUser. (with log)
+ * @param {*} destUser: Discord user
+ * @param {string} msg: content of the message
+ */
+function sendDirectMessage(destUser, msg) {
+    destUser.send(msg);
+    log.msgout(destUser.username, msg);
 }
 
 
 
 // chatbot basic loop
-client.on('message', message => {
+client.on('message', handleIncomingMessage);
 
+function handleIncomingMessage(message) {
     // check it is not our own message
     if (message.author.id == client.user.id) return;
 
-    // console.log(message.content);
-    console.log(message);
-    
-    message.channel.guild.members.fetch()
-        .then(displayMembers)
-        .catch(console.error)
-    
-/*
-    if (! message.author.bot) {
-        message.channel.send("je répond au message de " + message.author.username)
-    }
-*/
+    // check if it is not a message from a bot
+    if (message.author.bot) return;
 
-});
+    // we only reply to direct messages
+    if (message.channel.type != 'dm') return;
+
+    // logs
+    console.log(message);
+    log.msgin(message.author.username, message.content);
+
+    // get user
+    const user = db.get("select ")
+}
+
+
+
 
 
 bot.connect = function() {

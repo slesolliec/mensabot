@@ -20,11 +20,11 @@ function logger(msg) {
 
 
 log.msgout = function(to, msg) {
-    logger(colors.green(to) + ' ' + msg);
+    logger(colors.green('[>> ' + to + ']') + ' ' + msg);
 }
 
 log.msgin = function(from, msg) {
-    logger(colors.yellow(from) + ' ' + msg);
+    logger(colors.yellow('[' + from + ' >>]') + ' ' + msg);
 }
 
 log.debug = function (msg) {
