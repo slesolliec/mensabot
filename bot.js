@@ -40,6 +40,11 @@ function processAllMembers(memberMap) {
 
 // check that this member is inside our database
 function checkMember(member) {
+    // we don't care about bots
+    if (member.user.bot) {
+        return;
+    }
+
     // check we know that user
     db.get("select * from users where did = ?", member.user.id, (err, row) => {
         if (err) return console.error(err.message);
@@ -76,12 +81,12 @@ function handlerr(err) {
 
 
 // recurrent tasks
-setInterval(workloop, 1000);
+setInterval(workloop, 5000);
 
 
 function workloop() {
     // we look for a new user
-    db.get("select * from users where state = 'new' and did = '396752710487113729' limit 1", [], (err, row) => {
+    db.get("select cast(did as text) as did, discord_name from users where state = 'new' and did = '396752710487113729' limit 1", [], (err, row) => {
         if (err) return console.error(err.message);
 
         if (! row) return;
@@ -89,20 +94,22 @@ function workloop() {
         console.log(row);
 
         const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8').replace('##username##', row.discord_name);
-        // let user = client.users.cache.get(row.did);
-        let user = client.users.cache.get('396752710487113729');
-        console.log(user);
+        let user = client.users.cache.get(row.did);
+        if (! user) {
+            console.error("Impossible de trouver l'utilisateur ", row);
+            return;
+        }
         user.send(msgWelcome);
-        // db.run("update users set state = 'welcomed' where did = ?", [row.did]);
+        db.run("update users set state = 'welcomed' where did = ?", [row.did]);
     })
 }
 
 
 
-// chat bot basic loop
+// chatbot basic loop
 client.on('message', message => {
     // console.log(message.content);
-    // console.log(message);
+    console.log(message);
     
     message.channel.guild.members.fetch()
         .then(displayMembers)
