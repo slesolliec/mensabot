@@ -14,8 +14,10 @@
   "author": "Stéphane Le Solliec <stephane@metacites.net>",
   "license": "ISC",
   "dependencies": {
+    "colors": "^1.4.0",
     "discord.js": "^12.2.0",
     "fs": "0.0.1-security",
+    "moment": "^2.26.0",
     "sqlite3": "^4.2.0"
   }
 }
