@@ -89,7 +89,9 @@ bot.welcome = function() {
 
         console.log(row);
 
-        const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8').replace('##username##', row.discord_name);
+        const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8')
+            .replace(/##username##/g, row.discord_name)
+            .replace(/##botname##/g, client.user.username);
         let user = client.users.cache.get(row.did);
         if (! user) {
             console.error("Impossible de trouver l'utilisateur ", row);
@@ -104,6 +106,10 @@ bot.welcome = function() {
 
 // chatbot basic loop
 client.on('message', message => {
+
+    // check it is not our own message
+    if (message.author.id == client.user.id) return;
+
     // console.log(message.content);
     console.log(message);
     
