@@ -8,6 +8,14 @@ let db = new sqlite3.Database('./db/chatbot.sqlite3', sqlite3.OPEN_READWRITE, (e
 });
 
 
+// empty all data from db
+db.clean_db = function() {
+  db.run("delete from users");
+  db.run("delete from members");
+  db.run("delete from guilds");
+  db.run("vacuum");
+}
+
 /*
 // close the database connection
 db.close((err) => {
