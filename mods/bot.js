@@ -133,7 +133,22 @@ function handleIncomingMessage(message) {
     log.msgin(message.author.username, message.content);
 
     // get user
-    const user = db.get("select ")
+    db.get("select cast(did as text) as did, discord_name, state from users where did = ? and did = '396752710487113729'", [message.author.id], (err, row) => {
+        if (err) return console.error(err.message);
+
+        // check we know the person
+        if (! row) {
+            sendDirectMessage(message.author, "Bonjour monsieur, je n'ai pas l'impression de vous connaître. Pouvez-vous me recontacter dans un moment ?");
+            return;
+        }
+
+        // check the state is welcomed or new
+        if ((row.state != 'new') && (row.state != 'welcomed')) {
+            sendDirectMessage(message.author, "Bonjour, je n'ai rien d'autre à vous dire. Revenez dans quelques jours quand je serais plus locace.");
+            return;
+        }
+
+    });
 }
 
 
