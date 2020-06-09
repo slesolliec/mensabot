@@ -1,10 +1,10 @@
 const Discord = require('discord.js');
 const client  = new Discord.Client();
-const conf    = require('./configs');
-const db      = require('./mods/db');
+const conf    = require('../configs');
+const db      = require('./db');
 const fs      = require('fs');
 
-
+const bot = {};
 
 client.once('ready', () => {
     console.log('Bot is connected to Discord');
@@ -79,12 +79,8 @@ function handlerr(err) {
     }
 }
 
-
-// recurrent tasks
-setInterval(workloop, 5000);
-
-
-function workloop() {
+// welcome new users
+bot.welcome = function() {
     // we look for a new user
     db.get("select cast(did as text) as did, discord_name from users where state = 'new' and did = '396752710487113729' limit 1", [], (err, row) => {
         if (err) return console.error(err.message);
@@ -124,4 +120,9 @@ client.on('message', message => {
 });
 
 
-client.login(conf.botToken);
+bot.connect = function() {
+    client.login(conf.botToken);
+}
+
+
+module.exports = bot;
