@@ -133,12 +133,12 @@ function handleIncomingMessage(message) {
     log.msgin(message.author.username, message.content);
 
     // get user
-    db.get("select cast(did as text) as did, discord_name, state from users where did = ? and did = '396752710487113729'", [message.author.id], (err, row) => {
+    db.get("select cast(did as text) as did, discord_name, mid, state from users where did = ? and did = '396752710487113729'", [message.author.id], (err, row) => {
         if (err) return console.error(err.message);
 
         // check we know the person
         if (! row) {
-            sendDirectMessage(message.author, "Bonjour monsieur, je n'ai pas l'impression de vous connaître. Pouvez-vous me recontacter dans un moment ?");
+            sendDirectMessage(message.author, "Bonjour, je n'ai pas l'impression de vous connaître. Pouvez-vous me recontacter dans un moment ?");
             return;
         }
 
@@ -147,6 +147,51 @@ function handleIncomingMessage(message) {
             sendDirectMessage(message.author, "Bonjour, je n'ai rien d'autre à vous dire. Revenez dans quelques jours quand je serais plus locace.");
             return;
         }
+
+        // we are expecting a Mensa number
+        const mid = parseInt(message.content.split(' ').pop().replace(/[^0-9]/g, ''));
+        if (isNaN(mid) || (mid < 0)) {
+            sendDirectMessage(message.author, "Je m'attendais à votre numéro de Mensan. Pourriez-vous me le donner ?");
+            return;
+        }
+
+        // we already know his mid?
+        // important to check so people don't change their mid
+        if (row.mid) {
+            sendDirectMessage(message.author, "Vous m'avez déjà donné votre numéro de Mensan. Merci d'être patient.");
+            return;
+        }
+
+        // check if we already have that number
+        db.get("select * from users where mid=?", [mid], (err, row) => {
+            if (err) {
+                sendDirectMessage(message.author, "Aïe, une erreur interne m'empêche de traiter votre message. Je suis désolé.");
+                return console.error(err.message);
+            }
+
+            if (row) {
+                if (row.discord_name == message.author.name) {
+                    sendDirectMessage(message.author, "Vous m'aviez déjà envoyé votre numéro de Mensa. Je l'ai bien noté, merci.");
+                    return;
+                }
+                sendDirectMessage(message.author, "Ce numéro de Mensan est déjà dans ma base de données, mais il est attribué à un autre utilisateur. Désolé, mais je ne peux pas traiter votre demande.");
+                return;
+            }
+
+            // we store the user Mensa number
+            db.run("update users set mid = ? where did = ? and mid is null", [mid, message.author.id], (err) => {
+                if (err) {
+                    sendDirectMessage(message.author, "Aïe, une erreur interne m'empêche de traiter votre message. Je suis désolé.");
+                    return console.error(err.message);
+                }
+                
+                sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
+                    +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
+                    +"\n\nMerci de consulter vos emails dans quelques minutes.");
+            });
+        })
+
+        db.run("update users set mid=? where did=? and mid is null", [mid, message.author.id], handlerr);
 
     });
 }
