@@ -4,7 +4,8 @@ const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
 const log     = require('./log');
-const puppeteer = require('puppeteer');
+const puppeteer  = require('puppeteer');
+const nodemailer = require('nodemailer');
 
 const bot = {};
 
@@ -213,6 +214,13 @@ async function processNewMensan(err, row) {
 
     if (! row) return;
 
+    // get discord user
+    const discordUser = client.users.cache.get(row.did);
+    if (! discordUser) {
+        log.error("Impossible de trouver l'utilisateur "+ row.did + " / " + row.mid);
+        return;
+    }
+
     // launch puppeteer
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
@@ -232,13 +240,22 @@ async function processNewMensan(err, row) {
     }
 
     // get data
-    let identite = await page.$eval('#identite', el => el.innerText);
-    identite = identite.split('\n')[0].split('-');
-    const region = identite.pop().trim();
-    identite.pop();
-    const name = identite.join('-').trim();
+    let region, real_name, email;
+    try {
+        let identite = await page.$eval('#identite', el => el.innerText);
+        identite = identite.split('\n')[0].split('-');
+        region = identite.pop().trim();
+        identite.pop();
+        real_name = identite.join('-').trim();
+    } catch (err) {
+        console.log("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
+        console.log(err.message);
 
-    let email = '';
+        sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa.\n"
+            + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");
+        db.run("update users set state = 'in_error' where did = ?", [row.did]);
+        return;
+    }
 
     try {
         email = await page.$eval('div.email a', el => el.innerText);
@@ -248,10 +265,68 @@ async function processNewMensan(err, row) {
         console.log(err.message);
     }
 
-    console.log(name + ' - ' + region + ' - ' + email);
+    console.log('Found member info: ' + real_name + ' - ' + region + ' - ' + email);
     browser.close();
 
-    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [name, region, email, row.mid]);
+    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [real_name, region, email, row.mid]);
+
+    // do we have the email
+    if (! email) {
+        sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa.\n"
+            + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
+        db.run("update users set state = 'in_error' where did = ?", [row.did]);
+
+        return;
+    }
+
+    // we create the validation code
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+      }
+
+    const validationCode = ''
+        + getRandomInt(10)
+        + getRandomInt(10)
+        + getRandomInt(10)
+        + getRandomInt(10)
+        + getRandomInt(10)
+        + getRandomInt(10);
+
+    // send the email with validation code
+    var transporter = nodemailer.createTransport({
+        host: conf.smtp.host,
+        port: 465,  //
+        secure: true, // true for 465, false for other ports
+        auth: {
+            user: conf.smtp.user,
+            pass: conf.smtp.password
+        }
+    });
+      
+      var mailOptions = {
+        from: 'MensaBot <stephane@metacites.net>',
+        to: email,
+        subject: 'Votre code de confirmation MensaBot Discord',
+        text: 'Bonjour ' + real_name
+            + ',\n\n'
+            + 'Voici votre code de confirmation pour montrer au serveur Discord de Mensa que vous êtes bien un membre :\n'
+            + validationCode + '\n\n'
+            + 'Il vous suffit maintenant d\'envoyer ce code au bot Discord en Message Privé\n\n'
+            + 'Merci'
+      };
+      
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
+    db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, row.mid]);
+    sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email.\n"
+        + "\nIl suffit maintenant juste de me l'envoyer par message privé.");
+
 }
 
 
