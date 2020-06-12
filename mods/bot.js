@@ -4,6 +4,7 @@ const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
 const log     = require('./log');
+const puppeteer = require('puppeteer');
 
 const bot = {};
 
@@ -196,6 +197,62 @@ function handleIncomingMessage(message) {
     });
 }
 
+
+// we consult the Mensa France address book and get the user info
+bot.sendCode = function() {
+    db.get(
+       `select cast(did as text) as did, discord_name, mid, state
+        from users
+        where mid is not null
+          and (state = 'new' or state = 'welcomed')
+        limit 1`, [], processNewMensan);
+}
+
+async function processNewMensan(err, row) {
+    if (err) return log.error(err.message);
+
+    if (! row) return;
+
+    // launch puppeteer
+    const browser = await puppeteer.launch({headless: true});
+    const page = await browser.newPage();
+
+    const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + row.mid;
+    console.log("going to ",  infoPageUrl);
+    await page.goto(infoPageUrl);
+    console.log('Current page is ' + page.url());
+
+    // need authentification?
+    if (page.url().startsWith('https://auth')) {
+        await page.type("input[name='user']",     conf.m_userID);
+        await page.type("input[name='password']", conf.m_password);
+        await page.click('.form > .btn');
+        await page.waitForNavigation();
+        console.log('new page url: ', page.url());
+    }
+
+    // get data
+    let identite = await page.$eval('#identite', el => el.innerText);
+    identite = identite.split('\n')[0].split('-');
+    const region = identite.pop().trim();
+    identite.pop();
+    const name = identite.join('-').trim();
+
+    let email = '';
+
+    try {
+        email = await page.$eval('div.email a', el => el.innerText);
+        email = email.trim().split(' ').join('');
+    } catch (err) {
+        console.log("Mensa member does not seem to have an email address.");
+        console.log(err.message);
+    }
+
+    console.log(name + ' - ' + region + ' - ' + email);
+    browser.close();
+
+    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [name, region, email, row.mid]);
+}
 
 
 

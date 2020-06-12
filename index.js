@@ -5,4 +5,6 @@ const bot = require('./mods/bot.js');
 bot.connect();
 
 // welcome new users
-setInterval(bot.welcome, 2000);
+setInterval(bot.welcome, 10 * 1000);
+
+setInterval(bot.sendCode, 20 * 1000);

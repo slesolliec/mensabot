@@ -1,5 +1,7 @@
 const configs = {
-	botToken: 		""
+	botToken: 	"",
+	m_userID:   "",
+	m_password: ""
 }
 
 module.exports = configs;
