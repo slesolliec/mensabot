@@ -1,15 +1,15 @@
 -- here are all the queries used to create the database
-
 CREATE TABLE users (
-    did             INTEGER         PRIMARY KEY,
-    mid             INTEGER         UNIQUE,
-    discord_name    STRING (0, 100),
-    real_name       STRING (0, 200),
-    region          STRING (0, 3),
-    departement     INTEGER,
-    email           STRING (0, 100) UNIQUE,
-    state           STRING (0, 20)  DEFAULT new,
-    validation_code STRING (0, 6) 
+    did               INTEGER         PRIMARY KEY,
+    mid               INTEGER         UNIQUE,
+    discord_name      STRING (0, 100),
+    real_name         STRING (0, 200),
+    region            STRING (0, 3),
+    departement       INTEGER,
+    email             STRING (0, 100) UNIQUE,
+    state             STRING (0, 20)  DEFAULT new,
+    validation_code   STRING (0, 6),
+    validation_trials INTEGER         DEFAULT (0) 
 );
 
 -- did = Discord ID

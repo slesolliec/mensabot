@@ -112,7 +112,7 @@ bot.welcome = function() {
  */
 function sendDirectMessage(destUser, msg) {
     destUser.send(msg);
-    log.msgout(destUser.username, msg);
+    log.msgout(destUser.username + ' / ' + destUser.id, msg);
 }
 
 
@@ -131,11 +131,21 @@ function handleIncomingMessage(message) {
     if (message.channel.type != 'dm') return;
 
     // logs
-    console.log(message);
-    log.msgin(message.author.username, message.content);
+    // console.log(message);
+    log.msgin(message.author.username + ' / ' + message.author.id, message.content);
 
     // get user
-    db.get("select cast(did as text) as did, discord_name, mid, state from users where did = ? and did = '396752710487113729'", [message.author.id], (err, row) => {
+    const sql = `
+        select cast(did as text) as did,
+            discord_name,
+           mid,
+            state,
+            validation_code,
+            validation_trials
+        from users
+        where did = ?
+          and did = '396752710487113729' `;
+    db.get(sql, [message.author.id], (err, row) => {
         if (err) return console.error(err.message);
 
         // check we know the person
@@ -144,57 +154,101 @@ function handleIncomingMessage(message) {
             return;
         }
 
-        // check the state is welcomed or new
-        if ((row.state != 'new') && (row.state != 'welcomed')) {
+        if ((row.state != 'vcode_sent') && (row.state != 'new') && (row.state != 'welcomed')) {
             sendDirectMessage(message.author, "Bonjour, je n'ai rien d'autre à vous dire. Revenez dans quelques jours quand je serais plus locace.");
             return;
         }
 
-        // we are expecting a Mensa number
-        const mid = parseInt(message.content.split(' ').pop().replace(/[^0-9]/g, ''));
-        if (isNaN(mid) || (mid < 0)) {
-            sendDirectMessage(message.author, "Je m'attendais à votre numéro de Mensan. Pourriez-vous me le donner ?");
-            return;
-        }
+        // check the state is welcomed or new
+        if ((row.state == 'new') || (row.state == 'welcomed')) {
 
-        // we already know his mid?
-        // important to check so people don't change their mid
-        if (row.mid) {
-            sendDirectMessage(message.author, "Vous m'avez déjà donné votre numéro de Mensan. Merci d'être patient.");
-            return;
-        }
-
-        // check if we already have that number
-        db.get("select * from users where mid=?", [mid], (err, row) => {
-            if (err) {
-                sendDirectMessage(message.author, "Aïe, une erreur interne m'empêche de traiter votre message. Je suis désolé.");
-                return console.error(err.message);
-            }
-
-            if (row) {
-                if (row.discord_name == message.author.name) {
-                    sendDirectMessage(message.author, "Vous m'aviez déjà envoyé votre numéro de Mensa. Je l'ai bien noté, merci.");
-                    return;
-                }
-                sendDirectMessage(message.author, "Ce numéro de Mensan est déjà dans ma base de données, mais il est attribué à un autre utilisateur. Désolé, mais je ne peux pas traiter votre demande.");
+            // we are expecting a Mensa number
+            const mid = parseInt(message.content.split(' ').pop().replace(/[^0-9]/g, ''));
+            if (isNaN(mid) || (mid < 1)) {
+                sendDirectMessage(message.author, "Je m'attendais à votre numéro de Mensan. Pourriez-vous me le donner ?");
                 return;
             }
 
-            // we store the user Mensa number
-            db.run("update users set mid = ? where did = ? and mid is null", [mid, message.author.id], (err) => {
+            // we already know his mid?
+            // important to check so people don't change their mid
+            if (row.mid) {
+                sendDirectMessage(message.author, "Vous m'avez déjà donné votre numéro de Mensan. Merci d'être patient.");
+                return;
+            }
+
+            // check if we already have that number
+            db.get("select * from users where mid=?", [mid], (err, row) => {
                 if (err) {
                     sendDirectMessage(message.author, "Aïe, une erreur interne m'empêche de traiter votre message. Je suis désolé.");
                     return console.error(err.message);
                 }
-                
-                sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
-                    +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
-                    +"\n\nMerci de consulter vos emails dans quelques minutes.");
-            });
-        })
 
-        db.run("update users set mid=? where did=? and mid is null", [mid, message.author.id], handlerr);
+                if (row) {
+                    if (row.discord_name == message.author.name) {
+                        sendDirectMessage(message.author, "Vous m'aviez déjà envoyé votre numéro de Mensa. Je l'ai bien noté, merci.");
+                        return;
+                    }
+                    sendDirectMessage(message.author, "Ce numéro de Mensan est déjà dans ma base de données, mais il est attribué à un autre utilisateur. Désolé, mais je ne peux pas traiter votre demande.");
+                    return;
+                }
 
+                // we store the user Mensa number
+                db.run("update users set mid = ? where did = ? and mid is null", [mid, message.author.id], (err) => {
+                    if (err) {
+                        sendDirectMessage(message.author, "Aïe, une erreur interne m'empêche de traiter votre message. Je suis désolé.");
+                        return console.error(err.message);
+                    }
+                    
+                    sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
+                        +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
+                        +"\nMerci de consulter vos emails dans quelques minutes.");
+                });
+            })
+
+            db.run("update users set mid=? where did=? and mid is null", [mid, message.author.id], handlerr);
+        }
+
+        if (row.state == 'vcode_sent') {
+
+            // we are expecting a validation code
+            const vcode = message.content.split(' ').pop().trim().replace(/[^0-9]/g, '');
+            if (vcode.length != 6) {
+                sendDirectMessage(message.author, "Je n'ai pas compris votre code de validation. Pourriez-vous me le redonner ?\n"
+                    + "Il s'agit d'un code à 6 chiffres qui vous a été envoyé par email.");
+                return;
+            }
+
+            // maximum 3 trials
+            if (row.validation_trials > 2) {
+                sendDirectMessage(message.author, "Vous avez déjà essayé 3 fois de valider votre inscription.\n"
+                    + "Merci de contacter un administrateur du serveur pour qu'il vous valide manuellement.");
+                return;
+            }
+
+            // we check the validation code is good
+            if (row.validation_code == vcode) {
+                db.run("update users set state='validated' where did = ?", [message.author.id], (err) => {
+                    if (err) {
+                        sendDirectMessage(message.author, "Mince, une erreur interne m'empêche de valider votre demande.\n"
+                            + "Pourriez-vous ré-essayer ?\n"
+                            + "Si ça ne marche toujours pas, merci de contacter un administrateur du serveur. Désolé."
+                        );
+                        return;
+                    }
+                    // todo: promote user on the discord guilds he belongs
+
+                    sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
+                        + "Merci d'avoir bien voulu suivre cette procédure.\n"
+                        + "Vous pouvez à présent accéder à tous les salons.\n");
+                    return;
+                });
+
+            } else {
+                sendDirectMessage(message.author, "Votre code de validation ne semble pas être le bon.\n"
+                    +"Ré-essayez, ou bien contactez un administrateur du serveur, pour voir ce qu'il peut faire.");
+                db.run("update users set validation_trials = validation_trials + 1 where did = ?", [message.author.id], handlerr);
+            }
+        }
     });
 }
 
@@ -251,7 +305,7 @@ async function processNewMensan(err, row) {
         console.log("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
         console.log(err.message);
 
-        sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa.\n"
+        sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");
         db.run("update users set state = 'in_error' where did = ?", [row.did]);
         return;
@@ -272,7 +326,7 @@ async function processNewMensan(err, row) {
 
     // do we have the email
     if (! email) {
-        sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa.\n"
+        sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
         db.run("update users set state = 'in_error' where did = ?", [row.did]);
 
@@ -312,7 +366,7 @@ async function processNewMensan(err, row) {
             + 'Voici votre code de confirmation pour montrer au serveur Discord de Mensa que vous êtes bien un membre :\n'
             + validationCode + '\n\n'
             + 'Il vous suffit maintenant d\'envoyer ce code au bot Discord en Message Privé\n\n'
-            + 'Merci'
+            + 'Merci\n'
       };
       
       transporter.sendMail(mailOptions, function(error, info){
@@ -324,8 +378,8 @@ async function processNewMensan(err, row) {
       });
 
     db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, row.mid]);
-    sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email.\n"
-        + "\nIl suffit maintenant juste de me l'envoyer par message privé.");
+    sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
+        + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
 
 }
 

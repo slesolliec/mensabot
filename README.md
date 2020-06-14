@@ -30,8 +30,8 @@ Here a the main modules used in this small application:
 1. ~~Recevoir le numéro Mensa~~
 1. ~~Aller sur l'annuaire de Mensa pour lire le nom et l'email de la personne (et sa région au passage)~~
 1. ~~Généré code de confirmation aléatoire et l'envoyer par mail à la personne~~
-1. Recevoir le code de confirmation par MP et valider la personne comme Membre Mensa en base
-1. Donner le rôle qui lui permet de voir tous les channels sur le serveur Discord
+1. ~~Recevoir le code de confirmation par MP et valider la personne comme Membre Mensa en base~~
+1. Donner le rôle de membre Mensa sur le serveur Discord
 
 ### UC002: annuaire pseudo / vrais noms
 
