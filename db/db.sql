@@ -23,8 +23,9 @@ CREATE TABLE users (
 
 -- servers
 CREATE TABLE guilds (
-    gid  INTEGER         PRIMARY KEY,
-    name STRING (0, 200) 
+    gid         INTEGER         PRIMARY KEY,
+    name        STRING (0, 200),
+    mensan_role INTEGER
 );
 
 -- memberships: which users belong to which guilds

@@ -17,6 +17,38 @@ client.once('ready', () => {
 });
 
 
+/**
+ * Gives all mensa roles for each guild the user is in
+ * @param {integer} did : discord id of the user to promote
+ */
+function promoteUser(did) {
+    var role= member.guild.roles.cache.find(role => role.name === "role name");
+    // we fetch all roles that should be added to the member
+    db.all(`
+        select cast(mensan_role as text) as menrole
+        from guilds
+        where (select gid from members where did = ?)
+        `, [messag.author.id], (err, roles) => {
+            if (err) {
+                console.err(err);
+                return;
+            }
+
+            roles.map((role) => {
+                const discordRole = client.guilds.roles.cache.get(role.menrole)
+            });
+        })
+    // member.roles.add(role);
+    message.author.roles.add(role);
+
+}
+
+
+
+
+
+
+
 // take a guild: list all its members
 function processOneGuild(guild) {
     console.log("=== " + guild.name + " (" + guild.memberCount + " membres) ===");
@@ -29,6 +61,9 @@ function processOneGuild(guild) {
         
         db.run("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name], handlerr);
     })
+
+    // list roles of guild
+    guild.roles.cache.map(role => console.log('rôle:', role.name, 'id:', role.id));
 
     // we get the list of members of that guild
     guild.members.fetch()
@@ -236,6 +271,7 @@ function handleIncomingMessage(message) {
                         return;
                     }
                     // todo: promote user on the discord guilds he belongs
+
 
                     sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
                         + "Merci d'avoir bien voulu suivre cette procédure.\n"
