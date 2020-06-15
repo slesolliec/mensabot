@@ -31,7 +31,10 @@ Here a the main modules used in this small application:
 1. ~~Aller sur l'annuaire de Mensa pour lire le nom et l'email de la personne (et sa région au passage)~~
 1. ~~Généré code de confirmation aléatoire et l'envoyer par mail à la personne~~
 1. ~~Recevoir le code de confirmation par MP et valider la personne comme Membre Mensa en base~~
-1. Donner le rôle de membre Mensa sur le serveur Discord
+1. Donner le rôle de membre Mensa sur le serveur Discord:
+    - rendre plus fiable
+    - garder la trace de la promotion (add column in member table)
+1. Découvrir les nouveaux arrivants sur un serveur
 
 ### UC002: annuaire pseudo / vrais noms
 
@@ -41,3 +44,13 @@ Ca c'est pour facilité le fait de pouvoir retrouver les gens qu'on connait derr
 1. Répondre en MP _Heliode est Stéphane Le Solliec_
 1. Recevoir un MP _quel est le pseudo de Stéphane Le Solliec ?_
 1. Répondre en MP _Stéphane Le Solliec a pour pseudo Heliode_
+
+### UC003: administration 
+
+1. Demander à l'administrateur d'un serveur le nom du rôle de membre Mensa
+
+
+### some more links
+
+1. [how to check a message sender has admin privileges in a guild](https://stackoverflow.com/questions/56926998/how-can-i-check-if-the-message-author-has-an-admin-role-using-discord-js)
+

@@ -22,25 +22,50 @@ client.once('ready', () => {
  * @param {integer} did : discord id of the user to promote
  */
 function promoteUser(did) {
-    var role= member.guild.roles.cache.find(role => role.name === "role name");
+    // we don't get the discord user
+    // because discord users cannot have roles
+    // it's only members who can
+
     // we fetch all roles that should be added to the member
     db.all(`
-        select cast(mensan_role as text) as menrole
+        select cast(gid as text) as gid, cast(mensan_role as text) as mensan_role
         from guilds
-        where (select gid from members where did = ?)
-        `, [messag.author.id], (err, roles) => {
+        where gid in (select gid from members where did = ?)
+          and mensan_role is not null
+        `, [did], (err, roles) => {
             if (err) {
                 console.err(err);
                 return;
             }
 
             roles.map((role) => {
-                const discordRole = client.guilds.roles.cache.get(role.menrole)
-            });
-        })
-    // member.roles.add(role);
-    message.author.roles.add(role);
+                console.log(role);
 
+                const guild = client.guilds.cache.get(role.gid);
+                // console.log('==== The Guild ===\n', guild);
+
+                // check if bot hasPermission(['MANAGE_ROLES'])
+                if ( ! guild.me.hasPermission('MANAGE_ROLES')) {
+                    console.log("ouiinnnn, je n'ai pas le droit de changer les rôles");
+                    return;
+                }
+
+                console.log('je peux changer les roles');
+
+                const discordRole = guild.roles.cache.get(role.mensan_role)
+                // console.log('=== The Role ===\n', discordRole);
+
+                const member = guild.members.cache.get(did);
+                // console.log('=== The Member ===\n', member);
+                
+                member.roles.add(discordRole).catch((err) => {
+                    console.error('Error trying to give role', discordRole.name,
+                        'to', member.user.username,
+                        'on server', guild.name,
+                        'with error:',  err.message);
+                });
+            });
+        });
 }
 
 
@@ -107,6 +132,7 @@ function checkMember(member) {
     })
 
     console.log(member.user.username + " (" + member.user.id + ")");
+    member.roles.cache.forEach((role) => console.log( member.user.username, '@', role.guild.name , 'has role ', role.name, role.id)); // .map(displayRole);
 }
 
 
@@ -270,8 +296,9 @@ function handleIncomingMessage(message) {
                         );
                         return;
                     }
-                    // todo: promote user on the discord guilds he belongs
 
+                    // promote user on the discord guilds he belongs
+                    promoteUser(message.author.id);
 
                     sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
                         + "Merci d'avoir bien voulu suivre cette procédure.\n"
