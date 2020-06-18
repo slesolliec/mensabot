@@ -95,7 +95,7 @@ async function reMember(member) {
 // welcome new users
 bot.welcome = async function() {
     // we look for a new user
-    let newUser = await db.get("select cast(did as text) as did, discord_name from users where state = 'new' and did = '396752710487113729' limit 1", []);
+    let newUser = await db.get("select cast(did as text) as did, discord_name from users where state = 'new' limit 1", []);
 
     if (! newUser) return;
 
@@ -458,7 +458,7 @@ async function giveRoleToMember(row) {
         
     member.roles.add(discordRole)
         .then(() => {
-            sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name) + "**";
+            sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name + "**");
             db.run("update members set state='member' where gid=? and did=?", [guild.id, member.user.id]);
         })
         
