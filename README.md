@@ -14,7 +14,7 @@ This is currently a test ground for playing with nodeJS and Discord.
 
 Here a the main modules used in this small application:
 
-1. [SQLite Node](https://www.sqlitetutorial.net/sqlite-nodejs/)
+1. [sqlite3](https://www.npmjs.com/package/sqlite3). Tutorials: [SQLite Node](https://www.sqlitetutorial.net/sqlite-nodejs/)
 1. [Discord.js](https://discord.js.org/)
 1. [Puppeteer](https://pptr.dev/). (Maybe for later: [How to set up a Headless Chrome Node.js server inside a docker container](https://blog.logrocket.com/how-to-set-up-a-headless-chrome-node-js-server-in-docker/)
 
@@ -31,9 +31,9 @@ Here a the main modules used in this small application:
 1. ~~Aller sur l'annuaire de Mensa pour lire le nom et l'email de la personne (et sa région au passage)~~
 1. ~~Généré code de confirmation aléatoire et l'envoyer par mail à la personne~~
 1. ~~Recevoir le code de confirmation par MP et valider la personne comme Membre Mensa en base~~
-1. Donner le rôle de membre Mensa sur le serveur Discord:
-    - rendre plus fiable
-    - garder la trace de la promotion (add column in member table)
+1. ~~Donner le rôle de membre Mensa sur le serveur Discord:~~
+    - ~~rendre plus fiable~~
+    - ~~garder la trace de la promotion (add column in member table)~~
 1. Découvrir les nouveaux arrivants sur un serveur
 
 ### UC002: annuaire pseudo / vrais noms

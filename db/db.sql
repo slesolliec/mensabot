@@ -28,8 +28,15 @@ CREATE TABLE guilds (
     mensan_role INTEGER
 );
 
+
 -- memberships: which users belong to which guilds
 CREATE TABLE members (
     gid INTEGER NOT NULL,
-    did INTEGER NOT NULL
+    did INTEGER NOT NULL,
+    state        STRING (0, 10)
 );
+
+
+-- state = this is the state on the discord guild
+--    null  : we don't know
+--   member : he's a Mensa member in the guild
