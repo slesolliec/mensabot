@@ -8,3 +8,5 @@ bot.connect();
 setInterval(bot.welcome, 10 * 1000);
 
 setInterval(bot.sendCode, 15 * 1000);
+
+setInterval(bot.promote, 12 * 1000);

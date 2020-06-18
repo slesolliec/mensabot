@@ -32,7 +32,7 @@ log.debug = function (msg) {
 }
 
 log.warning = function (msg) {
-	logger( colors.yellow("[] ") + msg);
+	logger( colors.yellow("[WARNING] ") + msg);
 }
 
 log.error = function (msg, e) {

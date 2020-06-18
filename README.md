@@ -34,7 +34,10 @@ Here a the main modules used in this small application:
 1. ~~Donner le rôle de membre Mensa sur le serveur Discord:~~
     - ~~rendre plus fiable~~
     - ~~garder la trace de la promotion (add column in member table)~~
-1. Découvrir les nouveaux arrivants sur un serveur
+1. ~~Découvrir les nouveaux arrivants sur un serveur~~
+
+Problème : les membres d'un serveur qui sont déjà admins, ne pourront pas être promus par le bot.
+Il faudrait les détecter et les mettre comme admins (comme on l'a fait avec le owner).
 
 ### UC002: annuaire pseudo / vrais noms
 

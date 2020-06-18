@@ -10,98 +10,20 @@ const nodemailer = require('nodemailer');
 const bot = {};
 
 client.once('ready', () => {
-    console.log('Bot is connected to Discord');
+    log.debug('Bot is connected to Discord');
 
     // loop on my guilds
     client.guilds.cache.forEach(processOneGuild);
-
-    promoteUser('396752710487113729');
 });
 
+client.on('guildMemberAdd', reMember);
+client.on('message', handleIncomingMessage);
+
 
 /**
- * Gives all mensa roles for each guild the user is in
- * @param {integer} did : discord id of the user to promote
+ * Take a guild and list all of its members
+ * @param {Discord.Guild} guild 
  */
-async function promoteUser(did) {
-    // we don't get the discord user
-    // because discord users cannot have roles
-    // it's only members who can
-
-    // we fetch all roles that should be added to the member
-    let sql = `select cast(guilds.gid as text) as gid,
-        cast(guilds.mensan_role as text) as mensan_role
-    from guilds, members
-    where guilds.gid = members.gid
-      and members.did = ?
-      and members.state is null
-      and guilds.mensan_role is not null
-    `;
-
-    const roles = await db.all(sql, [did]);
-
-    roles.map((role) => {
-        // console.log(role);
-
-        const guild = client.guilds.cache.get(role.gid);
-        // console.log('==== The Guild ===\n', guild);
-
-        const member = guild.members.cache.get(did);
-        // console.log('=== The Member ===\n', member);
-
-        // check if bot hasPermission(['MANAGE_ROLES'])
-        if ( ! guild.me.hasPermission('MANAGE_ROLES')) {
-            console.log("ouiinnnn, je n'ai pas le droit de changer les rôles sur " + guild.name);
-            sendDirectMessage(member.user, "Zut, je n'ai pas le droit de changer les rôles sur le serveur **" + guild.name + "**"
-                + "\nIl faut que l'administrateur me donne ce droit, ou je ne peux rien faire :-("
-            );
-            return;
-        }
-
-        console.log('je peux changer les roles');
-
-        const discordRole = guild.roles.cache.get(role.mensan_role)
-        // console.log('=== The Role ===\n', discordRole);
-        
-        member.roles.add(discordRole)
-        .then(() => {
-            sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name) + "**";
-        })
-        
-        .catch((err) => {
-            console.error('Error trying to give role', discordRole.name,
-                'to', member.user.username,
-                'on server', guild.name,
-                'with error:',  err.message);
-            sendDirectMessage(member.user,
-                "Mince, je n'ai pas réussi à vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name + "**"
-                + "\nJe n'en ai peut-être pas l'autorisation.");
-        });
-    });
-}
-
-
-
-client.on('guildMemberAdd', processNewMember);
-
-/**
- * Handle when a new member enters guild
- * 
- * @param {Discord.GuildMember} member
- */
-function processNewMember(member) {
-    // we check if we know the user
-
-
-    // store all its memberships
-
-
-
-}
-
-
-
-// take a guild: list all its members
 function processOneGuild(guild) {
     console.log("=== " + guild.name + " (" + guild.memberCount + " membres) ===");
 
@@ -111,7 +33,7 @@ function processOneGuild(guild) {
 
         if (row) return;
         
-        db.run("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name], handlerr);
+        db.run("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
     })
 
     // list roles of guild
@@ -170,13 +92,6 @@ async function reMember(member) {
 }
 
 
-// handle errors
-function handlerr(err) {
-    if (err) {
-        console.error(err.message);
-    }
-}
-
 // welcome new users
 bot.welcome = async function() {
     // we look for a new user
@@ -212,9 +127,10 @@ function sendDirectMessage(destUser, msg) {
 }
 
 
-// chatbot basic loop
-client.on('message', handleIncomingMessage);
-
+/**
+ * This is the chatbot base loop
+ * @param {Discord.Message} message
+ */
 async function handleIncomingMessage(message) {
     // check it is not our own message
     if (message.author.id == client.user.id) return;
@@ -301,12 +217,9 @@ async function handleIncomingMessage(message) {
         if (theUser.validation_code == vcode) {
             db.run("update users set state='validated' where did = ?", [message.author.id]);
 
-            // promote user on the discord guilds he belongs
-            promoteUser(message.author.id);
-
             sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
                 + "Merci d'avoir bien voulu suivre cette procédure.\n"
-                + "Vous pouvez à présent accéder à tous les salons.\n");
+                + "Vous allez bientôt pouvoir accéder à tous les salons.\n");
             return;
 
         } else {
@@ -318,28 +231,44 @@ async function handleIncomingMessage(message) {
 }
 
 
-// we consult the Mensa France address book and get the user info
+/**
+ * We get one member that should receive a validation code
+ * and process it
+ */
 bot.sendCode = async function() {
     const newUser = await db.get(
-       `select cast(did as text) as did, discord_name, mid, state
+       `select cast(did as text) as did
         from users
         where mid is not null
           and (state = 'new' or state = 'welcomed')
-        limit 1`, []);
+        limit 1`);
     if (newUser)
-        processNewMensan(newUser);
+        processNewMensan(newUser.did);
 }
 
-async function processNewMensan(rowUser) {
 
-    if (! rowUser) return;
+async function processNewMensan(did) {
 
+    const rowUser = await db.getUser(did);
+    
     // get discord user
-    const discordUser = client.users.cache.get(rowUser.did);
+    let discordUser = client.users.cache.get(rowUser.did);
     if (! discordUser) {
         log.error("Impossible de trouver l'utilisateur "+ rowUser.did + " / " + rowUser.mid);
         return;
     }
+
+    // that function will also call sendValidationCode();
+    getMemberInfo(rowUser, discordUser);
+}
+
+
+/**
+ * Get Mensa Member data from online Mensa address book
+ * @param {*} rowUser 
+ * @param {Discord.User} discordUser 
+ */
+async function getMemberInfo(rowUser, discordUser) {
 
     // launch puppeteer
     const browser = await puppeteer.launch({headless: true});
@@ -360,13 +289,12 @@ async function processNewMensan(rowUser) {
     }
 
     // get data
-    let region, real_name, email;
     try {
         let identite = await page.$eval('#identite', el => el.innerText);
         identite = identite.split('\n')[0].split('-');
-        region = identite.pop().trim();
+        rowUser.region = identite.pop().trim();
         identite.pop();
-        real_name = identite.join('-').trim();
+        rowUser.real_name = identite.join('-').trim();
     } catch (err) {
         console.log("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
         console.log(err.message);
@@ -378,20 +306,31 @@ async function processNewMensan(rowUser) {
     }
 
     try {
-        email = await page.$eval('div.email a', el => el.innerText);
-        email = email.trim().split(' ').join('');
+        rowUser.email = await page.$eval('div.email a', el => el.innerText);
+        rowUser.email = rowUser.email.trim().split(' ').join('');
     } catch (err) {
         console.log("Mensa member does not seem to have an email address.");
         console.log(err.message);
     }
 
-    console.log('Found member info: ' + real_name + ' - ' + region + ' - ' + email);
+    console.log('Found member info: ' + rowUser.real_name + ' - ' + rowUser.region + ' - ' + rowUser.email);
     browser.close();
 
-    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [real_name, region, email, rowUser.mid]);
+    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
+
+    sendValidationCode(rowUser, discordUser);
+}
+
+
+/**
+ * Generate and send via email the validation code to the user
+ * @param {*} rowUser 
+ * @param {Discord.User} discordUser 
+ */
+async function sendValidationCode(rowUser, discordUser) {
 
     // do we have the email
-    if (! email) {
+    if (! rowUser.email) {
         sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
         db.run("update users set state = 'in_error' where did = ?", [rowUser.did]);
@@ -425,9 +364,9 @@ async function processNewMensan(rowUser) {
       
       var mailOptions = {
         from: 'MensaBot <stephane@metacites.net>',
-        to: email,
+        to: rowUser.email,
         subject: 'Votre code de confirmation MensaBot Discord',
-        text: 'Bonjour ' + real_name
+        text: 'Bonjour ' + rowUser.real_name
             + ',\n\n'
             + 'Voici votre code de confirmation pour montrer au serveur Discord de Mensa que vous êtes bien un membre :\n'
             + validationCode + '\n\n'
@@ -446,15 +385,105 @@ async function processNewMensan(rowUser) {
     db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
     sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
         + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
-
 }
 
 
+/**
+ * We give the discord roles to all who deserve it
+ */
+bot.promote = async function() {
+    // we fetch all roles that should be added to the member
+    let sql = `
+    select cast(guilds.gid as text) as gid,
+           cast(guilds.mensan_role as text) as rid, -- role id
+           cast(users.did as text) as did
+    from guilds, members, users
+    where guilds.gid = members.gid
+      and members.did = users.did
+      and members.state is null
+      and users.state = 'validated'
+      and guilds.mensan_role is not null
+    `;
 
+    const roles = await db.all(sql);
 
-bot.connect = function() {
-    client.login(conf.botToken);
+    // log.debug(roles);
+    roles.map(giveRoleToMember);
 }
 
+/**
+ * Gives all mensa roles for each guild the user is in
+ * @param {integer} did : discord id of the user to promote
+ */
+async function giveRoleToMember(row) {
+    // we don't get the discord user
+    // because discord users cannot have roles
+    // it's only members who can
+
+    // console.log(row);
+
+    const guild = client.guilds.cache.get(row.gid);
+    if (! guild) {
+        log.error("Error404: Guild " + row.gid + " not found !!!");
+        return;
+    }
+    // console.log('==== The Guild ===\n', guild);
+
+    const member = guild.members.cache.get(row.did);
+    if (! member) {
+        log.error("Error404: Member " + row.did + " not found in guild " + guild.name);
+        return;
+    }
+    // console.log('=== The Member ===\n', member);
+
+    // check if bot hasPermission(['MANAGE_ROLES'])
+    if ( ! guild.me.hasPermission('MANAGE_ROLES')) {
+        log.error("ouiinnnn, je n'ai pas le droit de changer les rôles sur " + guild.name);
+        /* TOO Dangerous of producing too many messages
+        sendDirectMessage(member.user, "Zut, je n'ai pas le droit de changer les rôles sur le serveur **" + guild.name + "**"
+            + "\nIl faut que l'administrateur me donne ce droit, ou je ne peux rien faire :-("
+        );
+        */
+        return;
+    }
+
+    log.debug('je peux changer les roles sur ' + guild.name);
+
+    const discordRole = guild.roles.cache.get(row.rid)
+    if (! discordRole) {
+        log.error("Error404: Role " + row.rid + " not found in guild " + guild.name);
+        return;
+    }
+    // console.log('=== The Role ===\n', discordRole);
+        
+    member.roles.add(discordRole)
+        .then(() => {
+            sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name) + "**";
+            db.run("update members set state='member' where gid=? and did=?", [guild.id, member.user.id]);
+        })
+        
+        .catch((err) => {
+            log.error('Error trying to give role ' + discordRole.name
+                 + ' to ' + member.user.username
+                 + ' on server ' + guild.name
+                 + ' with error: ' +  err.message);
+
+            // case user is owner:
+            if (member.guild.ownerID == row.did) {
+                db.run("update members set state = 'owner' where gid=? and did=?", [row.gid, row.did]);
+                log.warning("This is the owner of the server. I've noted it.");
+            } else {
+                console.log(member.roles.cache);
+            }
+            /* !!!! DANGER of message loop
+            sendDirectMessage(member.user,
+                "Mince, je n'ai pas réussi à vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name + "**"
+                + "\nJe n'en ai peut-être pas l'autorisation.");
+                */
+        });
+}
+
+
+bot.connect = function() { client.login(conf.botToken); }
 
 module.exports = bot;
