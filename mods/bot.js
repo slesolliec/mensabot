@@ -362,7 +362,7 @@ async function sendValidationCode(rowUser, discordUser) {
         }
     });
       
-      var mailOptions = {
+    var mailOptions = {
         from: 'MensaBot <stephane@metacites.net>',
         to: rowUser.email,
         subject: 'Votre code de confirmation MensaBot Discord',
@@ -372,19 +372,19 @@ async function sendValidationCode(rowUser, discordUser) {
             + validationCode + '\n\n'
             + 'Il vous suffit maintenant d\'envoyer ce code au bot Discord en Message Privé\n\n'
             + 'Merci\n'
-      };
+    };
       
-      transporter.sendMail(mailOptions, function(error, info){
+    transporter.sendMail(mailOptions, function(error, info){
         if (error) {
-          console.log(error);
+            console.log("Error sending email to", rowUser, error);
         } else {
-          console.log('Email sent: ' + info.response);
+            console.log('Email sent: ' + info.response);
+            db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
+            sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
+                + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
         }
-      });
+    });
 
-    db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
-    sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
-        + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
 }
 
 
