@@ -9,6 +9,8 @@ const nodemailer = require('nodemailer');
 
 const bot = {};
 
+bot.isProcessingNewMember = false;
+
 client.once('ready', () => {
     log.debug('Bot is connected to Discord');
 
@@ -249,12 +251,17 @@ bot.sendCode = async function() {
 
 async function processNewMensan(did) {
 
+    // handling lock
+    if (bot.isProcessingNewMember) return;
+    bot.isProcessingNewMember = true;
+
     const rowUser = await db.getUser(did);
     
     // get discord user
     let discordUser = client.users.cache.get(rowUser.did);
     if (! discordUser) {
         log.error("Impossible de trouver l'utilisateur "+ rowUser.did + " / " + rowUser.mid);
+        bot.isProcessingNewMember = false;
         return;
     }
 
@@ -302,6 +309,7 @@ async function getMemberInfo(rowUser, discordUser) {
         sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");
         db.run("update users set state = 'in_error' where did = ?", [rowUser.did]);
+        bot.isProcessingNewMember = false;
         return;
     }
 
@@ -316,7 +324,8 @@ async function getMemberInfo(rowUser, discordUser) {
     console.log('Found member info: ' + rowUser.real_name + ' - ' + rowUser.region + ' - ' + rowUser.email);
     browser.close();
 
-    db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
+    await db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
+    bot.isProcessingNewMember = false;
 
     sendValidationCode(rowUser, discordUser);
 }
@@ -333,7 +342,7 @@ async function sendValidationCode(rowUser, discordUser) {
     if (! rowUser.email) {
         sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
-        db.run("update users set state = 'in_error' where did = ?", [rowUser.did]);
+        db.run("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
 
         return;
     }
