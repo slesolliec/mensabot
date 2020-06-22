@@ -280,6 +280,7 @@ async function getMemberInfo(rowUser, discordUser) {
     // launch puppeteer
     const browser = await puppeteer.launch({headless: true, executablePath: 'chromium-browser'});
     const page = await browser.newPage();
+    page.setDefaultTimeout(90 * 1000);
 
     const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + rowUser.mid;
     log.debug("  Going to " + infoPageUrl);
