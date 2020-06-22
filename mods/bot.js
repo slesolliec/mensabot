@@ -271,13 +271,13 @@ async function processNewMensan(did) {
 async function getMemberInfo(rowUser, discordUser) {
 
     // launch puppeteer
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: true, executablePath: 'chromium-browser'});
     const page = await browser.newPage();
 
     const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + rowUser.mid;
-    console.log("going to ",  infoPageUrl);
+    log.debug("  Going to " + infoPageUrl);
     await page.goto(infoPageUrl);
-    console.log('Current page is ' + page.url());
+    log.debug('  Current page is ' + page.url());
 
     // need authentification?
     if (page.url().startsWith('https://auth')) {
@@ -285,7 +285,7 @@ async function getMemberInfo(rowUser, discordUser) {
         await page.type("input[name='password']", conf.m_password);
         await page.click('.form > .btn');
         await page.waitForNavigation();
-        console.log('new page url: ', page.url());
+        log.debug('  New page url: ', page.url());
     }
 
     // get data
@@ -296,8 +296,8 @@ async function getMemberInfo(rowUser, discordUser) {
         identite.pop();
         rowUser.real_name = identite.join('-').trim();
     } catch (err) {
-        console.log("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
-        console.log(err.message);
+        log.warning("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
+        log.error(err.message);
 
         sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");

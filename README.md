@@ -53,7 +53,17 @@ Ca c'est pour facilité le fait de pouvoir retrouver les gens qu'on connait derr
 1. Demander à l'administrateur d'un serveur le nom du rôle de membre Mensa
 
 
+### getting Puppetter to work on RaspBerry
+
+The headless chrome that comes with Puppetter via npm does not work on RaspBerry.
+
+1. You need to install Chrome first: sudo apt-get install chromium-browser --yes
+1. Then instanciate the brower with: const browser = await puppeteer.launch({headless: true, executablePath: 'chromium-browser'});
+
+
 ### some more links
 
 1. [how to check a message sender has admin privileges in a guild](https://stackoverflow.com/questions/56926998/how-can-i-check-if-the-message-author-has-an-admin-role-using-discord-js)
+
+
 
