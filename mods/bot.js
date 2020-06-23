@@ -280,11 +280,17 @@ async function getMemberInfo(rowUser, discordUser) {
     // launch puppeteer
     const browser = await puppeteer.launch({headless: true, executablePath: 'chromium-browser'});
     const page = await browser.newPage();
-    page.setDefaultTimeout(90 * 1000);
+    // page.setDefaultTimeout(90 * 1000);
 
     const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + rowUser.mid;
     log.debug("  Going to " + infoPageUrl);
-    await page.goto(infoPageUrl);
+    try {
+        await page.goto(infoPageUrl);
+    } catch(err) {
+        log.error(err.message);
+        bot.isProcessingNewMember = false;
+        return;
+    }
     log.debug('  Current page is ' + page.url());
 
     // need authentification?
@@ -293,7 +299,7 @@ async function getMemberInfo(rowUser, discordUser) {
         await page.type("input[name='password']", conf.m_password);
         await page.click('.form > .btn');
         await page.waitForNavigation();
-        log.debug('  New page url: ', page.url());
+        log.debug('  New page url: ' + page.url());
     }
 
     // get data
