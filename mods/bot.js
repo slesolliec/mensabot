@@ -256,7 +256,7 @@ async function processNewMensan(did) {
     bot.isProcessingNewMember = true;
 
     const rowUser = await db.getUser(did);
-    
+
     // get discord user
     let discordUser = client.users.cache.get(rowUser.did);
     if (! discordUser) {
@@ -272,13 +272,17 @@ async function processNewMensan(did) {
 
 /**
  * Get Mensa Member data from online Mensa address book
- * @param {*} rowUser 
- * @param {Discord.User} discordUser 
+ * @param {*} rowUser
+ * @param {Discord.User} discordUser
  */
 async function getMemberInfo(rowUser, discordUser) {
 
     // launch puppeteer
-    const browser = await puppeteer.launch({headless: true, executablePath: 'chromium-browser'});
+    const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: 'chromium-browser',
+        userDataDir: './puppetdir/'
+    });
     const page = await browser.newPage();
     // page.setDefaultTimeout(90 * 1000);
 
@@ -298,7 +302,11 @@ async function getMemberInfo(rowUser, discordUser) {
         await page.type("input[name='user']",     conf.m_userID);
         await page.type("input[name='password']", conf.m_password);
         await page.click('.form > .btn');
-        await page.waitForNavigation();
+        try {
+            await page.waitForNavigation();
+        } catch(err) {
+            log.error("Error after login: " + err.message);
+        }
         log.debug('  New page url: ' + page.url());
     }
 
