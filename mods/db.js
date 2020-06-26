@@ -1,11 +1,12 @@
 const sqlite3 = require('sqlite3');
 const util    = require('util')
+const log     = require('./log');
 
 let db = new sqlite3.Database('./db/chatbot.sqlite3', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
         console.error(err.message);
     }
-    console.log('Connected to the chatbot database.');
+    log.debug('Connected to the chatbot database.');
 });
 
 db.run = util.promisify(db.run);

@@ -238,6 +238,7 @@ async function handleIncomingMessage(message) {
  * and process it
  */
 bot.sendCode = async function() {
+    log.debug("Any new user?");
     const newUser = await db.get(
        `select cast(did as text) as did
         from users
@@ -252,7 +253,10 @@ bot.sendCode = async function() {
 async function processNewMensan(did) {
 
     // handling lock
-    if (bot.isProcessingNewMember) return;
+    if (bot.isProcessingNewMember) {
+        log.debug("Bot is already browsing the web ...");
+        return;
+    }
     bot.isProcessingNewMember = true;
 
     const rowUser = await db.getUser(did);
@@ -277,18 +281,23 @@ async function processNewMensan(did) {
  */
 async function getMemberInfo(rowUser, discordUser) {
 
+    log.debug("Getting info of member " + rowUser.mid + " (" + rowUser.discord_name + ")");
+
     // launch puppeteer
     let browser, page;
     try {
+        log.debug("Launching web browser");
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
     //        executablePath: 'chromium-browser',
             userDataDir: 'puppetdir'
         });
+        log.debug("Opening new page");
         page = await browser.newPage();
         // page.setDefaultTimeout(90 * 1000);
     } catch (err) {
         log.error("Failed to launch Web Browser with: " + err.message);
+        bot.isProcessingNewMember = false;
         return;
     }
 
@@ -382,7 +391,7 @@ async function sendValidationCode(rowUser, discordUser) {
         + getRandomInt(10);
 
     // send the email with validation code
-    var transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
         host: conf.smtp.host,
         port: 465,  //
         secure: true, // true for 465, false for other ports
@@ -391,17 +400,18 @@ async function sendValidationCode(rowUser, discordUser) {
             pass: conf.smtp.password
         }
     });
-      
-    var mailOptions = {
-        from: 'MensaBot <stephane@metacites.net>',
-        to: rowUser.email,
+
+    const msgWelcome = fs.readFileSync('./messages/email_validation_code.txt', 'utf-8')
+        .replace(/##real_name##/g,      rowUser.real_name)
+        .replace(/##validationCode##/g, validationCode)
+        .replace(/##botAdminName##/g,   conf.botAdmin.name)
+        .replace(/##botAdminEmail##/g,  conf.botAdmin.email);
+
+    const mailOptions = {
+        from:    'MensaBot <' + conf.botAdmin.email + '>',
+        to:      rowUser.email,
         subject: 'Votre code de confirmation MensaBot Discord',
-        text: 'Bonjour ' + rowUser.real_name
-            + ',\n\n'
-            + 'Voici votre code de confirmation pour montrer au serveur Discord de Mensa que vous êtes bien un membre :\n'
-            + validationCode + '\n\n'
-            + 'Il vous suffit maintenant d\'envoyer ce code au bot Discord en Message Privé\n\n'
-            + 'Merci\n'
+        text:    msgWelcome
     };
       
     transporter.sendMail(mailOptions, function(error, info){
