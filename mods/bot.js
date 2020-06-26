@@ -278,13 +278,19 @@ async function processNewMensan(did) {
 async function getMemberInfo(rowUser, discordUser) {
 
     // launch puppeteer
-    const browser = await puppeteer.launch({
-        headless: true,
-        executablePath: 'chromium-browser',
-        userDataDir: './puppetdir/'
-    });
-    const page = await browser.newPage();
-    // page.setDefaultTimeout(90 * 1000);
+    let browser, page;
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+    //        executablePath: 'chromium-browser',
+            userDataDir: 'puppetdir'
+        });
+        page = await browser.newPage();
+        // page.setDefaultTimeout(90 * 1000);
+    } catch (err) {
+        log.error("Failed to launch Web Browser with: " + err.message);
+        return;
+    }
 
     const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + rowUser.mid;
     log.debug("  Going to " + infoPageUrl);
