@@ -1,7 +1,5 @@
 const configs = {
 	botToken: 	"",
-	m_userID:   "",
-	m_password: "",
 	smtp: {
 		host: 'smtp.truc.com',
 		user: 'monemail@truc.com',
@@ -10,6 +8,12 @@ const configs = {
 	botAdmin: {
 		name:  "Name of Admin",
 		email: "admin@example.com"
+	},
+	web: {
+		userid:   "",
+		password: "",
+		headless: true,
+		url: 'https://mensa-france.net/membres/annuaire/?id='
 	}
 }
 

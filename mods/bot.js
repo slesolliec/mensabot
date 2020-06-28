@@ -288,7 +288,7 @@ async function getMemberInfo(rowUser, discordUser) {
     try {
         log.debug("Launching web browser");
         browser = await puppeteer.launch({
-            headless: false,
+            headless: conf.web.headless,
     //        executablePath: 'chromium-browser',
             userDataDir: 'puppetdir'
         });
@@ -301,7 +301,7 @@ async function getMemberInfo(rowUser, discordUser) {
         return;
     }
 
-    const infoPageUrl = 'https://mensa-france.net/membres/annuaire/?id=' + rowUser.mid;
+    const infoPageUrl = conf.web.url + rowUser.mid;
     log.debug("  Going to " + infoPageUrl);
     try {
         await page.goto(infoPageUrl);
@@ -314,8 +314,8 @@ async function getMemberInfo(rowUser, discordUser) {
 
     // need authentification?
     if (page.url().startsWith('https://auth')) {
-        await page.type("input[name='user']",     conf.m_userID);
-        await page.type("input[name='password']", conf.m_password);
+        await page.type("input[name='user']",     conf.web.userid);
+        await page.type("input[name='password']", conf.web.password);
         await page.click('.form > .btn');
         try {
             await page.waitForNavigation();
