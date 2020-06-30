@@ -1,5 +1,11 @@
 const configs = {
 	botToken: 	"",
+	mysql: {
+		host: '127.0.0.1',
+		user: 'mensabot',
+		password: '***',
+		database: 'mensabot'
+	},
 	smtp: {
 		host: 'smtp.truc.com',
 		user: 'monemail@truc.com',

@@ -30,12 +30,12 @@ function processOneGuild(guild) {
     console.log("=== " + guild.name + " (" + guild.memberCount + " membres) ===");
 
     // check we know that guild
-    db.get("select * from guilds where gid = ?", guild.id, (err, row) => {
+    db.query("select * from guilds where gid = ?", guild.id, (err, rows) => {
         if (err) return console.log(err.message);
 
-        if (row) return;
+        if (rows) return;
         
-        db.run("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
+        db.query("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
     })
 
     // list roles of guild
@@ -64,14 +64,14 @@ async function reMember(member) {
     let theUser = await db.getUser(member.user.id);
     if (! theUser) {
         // member is not here
-        await db.run("insert into users(did, discord_name) values(?, ?)", [member.user.id, member.user.username]);
+        await db.query("insert into users(did, discord_name) values(?, ?)", [member.user.id, member.user.username]);
         // theUser = await db.getUser(member.user.id);
     }
 
     // check we know the guild
     let theGuild = await db.getGuild(member.guild.id);
     if (! theGuild) {
-        await db.run("insert into guilds(gid, name) values(?, ?)", [member.guild.id, member.guild.name]);
+        await db.query("insert into guilds(gid, name) values(?, ?)", [member.guild.id, member.guild.name]);
         theGuild = await db.getGuild(member.guild.id);
     }
 
@@ -79,7 +79,7 @@ async function reMember(member) {
     let theMember = await db.getMember(member.guild.id, member.user.id);
     if (! theMember) {
         // member is not here
-        await db.run("insert into members(gid, did) values(?, ?)", [member.guild.id, member.user.id]);
+        await db.query("insert into members(gid, did) values(?, ?)", [member.guild.id, member.user.id]);
         theMember = await db.getMember(member.guild.id, member.user.id);
     }
 
@@ -90,16 +90,18 @@ async function reMember(member) {
     // we check if the member has already the mensan role
     if (theGuild.mensan_role)
         if (member.roles.cache.has(theGuild.mensan_role))
-            db.run('update members set state="member" where gid = ? and did = ?', [member.guild.id, member.user.id]);
+            db.query('update members set state="member" where gid = ? and did = ?', [member.guild.id, member.user.id]);
 }
 
 
 // welcome new users
 bot.welcome = async function() {
     // we look for a new user
-    let newUser = await db.get("select cast(did as text) as did, discord_name from users where state = 'new' limit 1", []);
+    const rows = await db.query("select did, discord_name from users where state = 'new' limit 1", []);
 
-    if (! newUser) return;
+    if (! rows) return;
+
+    let newUser = rows[0];
 
     // compose welcome message
     const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8')
@@ -114,7 +116,7 @@ bot.welcome = async function() {
     }
 
     sendDirectMessage(user, msgWelcome);
-    db.run("update users set state = 'welcomed' where did = ?", [user.id]);
+    db.query("update users set state = 'welcomed' where did = ?", [user.id]);
 }
 
 
@@ -179,8 +181,9 @@ async function handleIncomingMessage(message) {
         }
 
         // check if we already have that number
-        const checkUser = await db.get("select cast(did as text) as did from users where mid=?", [mid]);
-        if (checkUser) {
+        const rows = await db.query("select did from users where mid=?", [mid]);
+        if (rows) {
+            const checkUser = rows[0];
             if (checkUser.did == message.author.id) {
                 sendDirectMessage(message.author, "Vous m'aviez déjà envoyé votre numéro de Mensa. Je l'ai bien noté, merci.");
                 return;
@@ -190,7 +193,7 @@ async function handleIncomingMessage(message) {
         }
 
         // we store the user Mensa number
-        db.run("update users set mid = ? where did = ? and mid is null", [mid, message.author.id]);
+        db.query("update users set mid = ? where did = ? and mid is null", [mid, message.author.id]);
         sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
             +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
             +"\nMerci de consulter vos emails dans quelques minutes.");
@@ -217,7 +220,7 @@ async function handleIncomingMessage(message) {
 
         // we check the validation code is good
         if (theUser.validation_code == vcode) {
-            db.run("update users set state='validated' where did = ?", [message.author.id]);
+            db.query("update users set state='validated' where did = ?", [message.author.id]);
 
             sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
                 + "Merci d'avoir bien voulu suivre cette procédure.\n"
@@ -227,7 +230,7 @@ async function handleIncomingMessage(message) {
         } else {
             sendDirectMessage(message.author, "Votre code de validation ne semble pas être le bon.\n"
                 +"Ré-essayez, ou bien contactez un administrateur du serveur, pour voir ce qu'il peut faire.");
-            db.run("update users set validation_trials = validation_trials + 1 where did = ?", [message.author.id]);
+            db.query("update users set validation_trials = validation_trials + 1 where did = ?", [message.author.id]);
         }
     }
 }
@@ -239,14 +242,14 @@ async function handleIncomingMessage(message) {
  */
 bot.sendCode = async function() {
     log.debug("Any new user?");
-    const newUser = await db.get(
+    const rows = await db.query(
        `select cast(did as text) as did
         from users
         where mid is not null
           and (state = 'new' or state = 'welcomed')
         limit 1`);
-    if (newUser)
-        processNewMensan(newUser.did);
+    if (rows)
+        processNewMensan(rows[0].did);
 }
 
 
@@ -338,7 +341,7 @@ async function getMemberInfo(rowUser, discordUser) {
 
         sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");
-        db.run("update users set state = 'in_error' where did = ?", [rowUser.did]);
+        db.query("update users set state = 'in_error' where did = ?", [rowUser.did]);
         bot.isProcessingNewMember = false;
         return;
     }
@@ -354,7 +357,7 @@ async function getMemberInfo(rowUser, discordUser) {
     console.log('Found member info: ' + rowUser.real_name + ' - ' + rowUser.region + ' - ' + rowUser.email);
     browser.close();
 
-    await db.run("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
+    await db.query("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
     bot.isProcessingNewMember = false;
 
     sendValidationCode(rowUser, discordUser);
@@ -372,7 +375,7 @@ async function sendValidationCode(rowUser, discordUser) {
     if (! rowUser.email) {
         sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
-        db.run("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
+        db.query("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
 
         return;
     }
@@ -419,7 +422,7 @@ async function sendValidationCode(rowUser, discordUser) {
             console.log("Error sending email to", rowUser, error);
         } else {
             console.log('Email sent: ' + info.response);
-            db.run("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
+            db.query("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
             sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
                 + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
         }
@@ -445,7 +448,7 @@ bot.promote = async function() {
       and guilds.mensan_role is not null
     `;
 
-    const roles = await db.all(sql);
+    const roles = await db.query(sql);
 
     // log.debug(roles);
     roles.map(giveRoleToMember);
@@ -499,7 +502,7 @@ async function giveRoleToMember(row) {
     member.roles.add(discordRole)
         .then(() => {
             sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name + "**");
-            db.run("update members set state='member' where gid=? and did=?", [guild.id, member.user.id]);
+            db.query("update members set state='member' where gid=? and did=?", [guild.id, member.user.id]);
         })
         
         .catch((err) => {
@@ -510,7 +513,7 @@ async function giveRoleToMember(row) {
 
             // case user is owner:
             if (member.guild.ownerID == row.did) {
-                db.run("update members set state = 'owner' where gid=? and did=?", [row.gid, row.did]);
+                db.query("update members set state = 'owner' where gid=? and did=?", [row.gid, row.did]);
                 log.warning("This is the owner of the server. I've noted it.");
             } else {
                 console.log(member.roles.cache);

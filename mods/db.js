@@ -1,61 +1,63 @@
-const sqlite3 = require('sqlite3');
-const util    = require('util')
-const log     = require('./log');
+"use strict"
 
-let db = new sqlite3.Database('./db/chatbot.sqlite3', sqlite3.OPEN_READWRITE, (err) => {
+const mysql = require('mysql')
+const util  = require('util')
+const log   = require('./log')
+const conf  = require('./configs')
+
+let pool = mysql.createPool({
+	connectionLimit: 10,
+	host     : conf.host,
+	user     : conf.user,
+	password : conf.password,
+	database : conf.database,
+	charset  : 'utf8mb4',
+	timezone : 'Z'
+})
+
+pool.getConnection((err, connection) => {
     if (err) {
-        console.error(err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.error('Database connection was closed.')
+        }
+        if (err.code === 'ER_CON_COUNT_ERROR') {
+            console.error('Database has too many connections.')
+        }
+        if (err.code === 'ECONNREFUSED') {
+            console.error('Database connection was refused.')
+        }
+        log.error(err.message)
     }
-    log.debug('Connected to the chatbot database.');
-});
+    if (connection) {
+      log.debug('Connected to the chatbot database.')
+      connection.release()
+    }
+    return
+})
 
-db.run = util.promisify(db.run);
-db.get = util.promisify(db.get);
-db.all = util.promisify(db.all);
+pool.query = util.promisify(pool.query)
+
 
 // empty all data from db
-db.clean_db = async function() {
-  await db.run("delete from users");
-  await db.run("delete from members");
-  await db.run("delete from guilds");
-  await db.run("vacuum");
+pool.clean_db = async function() {
+  await db.query("delete from users");
+  await db.query("delete from members");
+  await db.query("delete from guilds");
 }
 
 
-db.getGuild = async function(gid) {
-  return await db.get(`
-    select cast(gid as text) as gid,
-      name,
-      cast(mensan_role as text) as mensan_role
-    from guilds
-    where gid = ?`, [gid]);
+pool.getGuild = async function(gid) {
+  return await db.get(`select * from guilds where gid = ?`, [gid]);
 }
 
-db.getUser = async function(did) {
-  return await db.get(`
-    select cast(did as text) as did,
-      mid,
-      discord_name,
-      real_name,
-      region,
-      departement,
-      email,
-      state,
-      validation_code,
-      validation_trials
-    from users
-    where did = ?`, [did]);
+
+pool.getUser = async function(did) {
+  return await db.get(`select * from users where did = ?`, [did]);
 }
 
-db.getMember = async function(gid, did) {
-  return await db.get(`
-    select cast(gid as text) as gid,
-      cast(did as text) as did,
-      state
-    from members
-    where gid = ?
-      and did = ?
-  `, [gid, did]);
+
+pool.getMember = async function(gid, did) {
+  return await db.query(`select * from members where gid = ? and did = ?`, [gid, did]);
 }
 
 
@@ -69,4 +71,4 @@ db.close((err) => {
   });
   */
 
-module.exports = db;
+module.exports = pool

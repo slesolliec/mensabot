@@ -1,15 +1,15 @@
 -- here are all the queries used to create the database
 CREATE TABLE users (
-    did               INTEGER         PRIMARY KEY,
-    mid               INTEGER         UNIQUE,
-    discord_name      STRING (0, 100),
-    real_name         STRING (0, 200),
-    region            STRING (0, 3),
-    departement       INTEGER,
-    email             STRING (0, 100) UNIQUE,
-    state             STRING (0, 20)  DEFAULT new,
-    validation_code   STRING (0, 6),
-    validation_trials INTEGER         DEFAULT (0) 
+    did               bigint PRIMARY KEY,
+    mid               int    UNIQUE,
+    discord_name      varchar(100),
+    real_name         varchar(200),
+    region            varchar(3),
+    departement       smallint,
+    email             varchar(100) UNIQUE,
+    state             varchar(20)  DEFAULT 'new',
+    validation_code   varchar(6),
+    validation_trials tinyint DEFAULT 0 
 );
 
 -- did = Discord ID
@@ -23,17 +23,17 @@ CREATE TABLE users (
 
 -- servers
 CREATE TABLE guilds (
-    gid         INTEGER         PRIMARY KEY,
-    name        STRING (0, 200),
-    mensan_role INTEGER
+    gid         bigint PRIMARY KEY,
+    name        varchar(200),
+    mensan_role bigint
 );
 
 
 -- memberships: which users belong to which guilds
 CREATE TABLE members (
-    gid INTEGER NOT NULL,
-    did INTEGER NOT NULL,
-    state        STRING (0, 10)
+    gid bigint NOT NULL,
+    did bigint NOT NULL,
+    state varchar(20)
 );
 
 
