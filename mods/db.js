@@ -3,14 +3,14 @@
 const mysql = require('mysql')
 const util  = require('util')
 const log   = require('./log')
-const conf  = require('./configs')
+const conf  = require('../configs')
 
 let pool = mysql.createPool({
 	connectionLimit: 10,
-	host     : conf.host,
-	user     : conf.user,
-	password : conf.password,
-	database : conf.database,
+	host     : conf.mysql.host,
+	user     : conf.mysql.user,
+	password : conf.mysql.password,
+	database : conf.mysql.database,
 	charset  : 'utf8mb4',
 	timezone : 'Z'
 })
@@ -37,27 +37,60 @@ pool.getConnection((err, connection) => {
 
 pool.query = util.promisify(pool.query)
 
-
 // empty all data from db
 pool.clean_db = async function() {
-  await db.query("delete from users");
-  await db.query("delete from members");
-  await db.query("delete from guilds");
+  await pool.query("delete from users");
+  await pool.query("delete from members");
+  await pool.query("delete from guilds");
+}
+
+
+pool.getOne = async function(sql, arr) {
+  const rows = await pool.query(sql, arr);
+  if (rows.length) {
+    return rows[0];
+  }
+  return undefined;
 }
 
 
 pool.getGuild = async function(gid) {
-  return await db.get(`select * from guilds where gid = ?`, [gid]);
+  return await pool.getOne(`
+    select cast(gid as char) as gid,
+      name,
+      cast(mensan_role as char) as mensan_role
+    from guilds
+    where gid = ?`, [gid]);
 }
 
 
 pool.getUser = async function(did) {
-  return await db.get(`select * from users where did = ?`, [did]);
+  return await pool.getOne(`
+    select cast(did as char) as did,
+      mid,
+      discord_name,
+      real_name,
+      region,
+      departement,
+      email,
+      state,
+      validation_code,
+      validation_trials
+    from users
+    where did = ?`, [did]);
 }
 
 
 pool.getMember = async function(gid, did) {
-  return await db.query(`select * from members where gid = ? and did = ?`, [gid, did]);
+  return await pool.getOne(`
+  select
+    cast(gid as char) as gid,
+    cast(did as char) as did,
+    state
+  from members
+  where gid = ?
+    and did = ?
+`, [gid, did]);
 }
 
 

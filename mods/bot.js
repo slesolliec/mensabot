@@ -26,18 +26,14 @@ client.on('message', handleIncomingMessage);
  * Take a guild and list all of its members
  * @param {Discord.Guild} guild 
  */
-function processOneGuild(guild) {
+async function processOneGuild(guild) {
     console.log("=== " + guild.name + " (" + guild.memberCount + " membres) ===");
 
     // check we know that guild
-    db.query("select * from guilds where gid = ?", guild.id, (err, rows) => {
-        if (err) return console.log(err.message);
-
-        if (rows) return;
-        
+    const checkGuild = await db.getGuild(guild.id);
+    if (! checkGuild)
         db.query("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
-    })
-
+    
     // list roles of guild
     guild.roles.cache.map(role => console.log('rôle:', role.name, 'id:', role.id));
 
@@ -97,11 +93,9 @@ async function reMember(member) {
 // welcome new users
 bot.welcome = async function() {
     // we look for a new user
-    const rows = await db.query("select did, discord_name from users where state = 'new' limit 1", []);
+    const newUser = await db.getOne("select cast(did as char) as did, discord_name from users where state = 'new' limit 1", []);
 
-    if (! rows) return;
-
-    let newUser = rows[0];
+    if (! newUser) return;
 
     // compose welcome message
     const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8')
@@ -150,7 +144,7 @@ async function handleIncomingMessage(message) {
     log.msgin(message.author.username + ' / ' + message.author.id, message.content);
 
     // get user
-    let theUser = await db.getUser(message.author.id);
+    const theUser = await db.getUser(message.author.id);
 
     // check we know the person
     if (! theUser) {
@@ -181,9 +175,8 @@ async function handleIncomingMessage(message) {
         }
 
         // check if we already have that number
-        const rows = await db.query("select did from users where mid=?", [mid]);
-        if (rows) {
-            const checkUser = rows[0];
+        const checkUser = await db.getOne("select cast(did as char) as did from users where mid=?", [mid]);
+        if (checkUser) {
             if (checkUser.did == message.author.id) {
                 sendDirectMessage(message.author, "Vous m'aviez déjà envoyé votre numéro de Mensa. Je l'ai bien noté, merci.");
                 return;
@@ -241,15 +234,15 @@ async function handleIncomingMessage(message) {
  * and process it
  */
 bot.sendCode = async function() {
-    log.debug("Any new user?");
-    const rows = await db.query(
-       `select cast(did as text) as did
+    // log.debug("Any new user?");
+    const newUser = await db.getOne(
+       `select cast(did as char) as did
         from users
         where mid is not null
           and (state = 'new' or state = 'welcomed')
         limit 1`);
-    if (rows)
-        processNewMensan(rows[0].did);
+    if (newUser)
+        processNewMensan(newUser.did);
 }
 
 
@@ -297,7 +290,7 @@ async function getMemberInfo(rowUser, discordUser) {
         });
         log.debug("Opening new page");
         page = await browser.newPage();
-        // page.setDefaultTimeout(90 * 1000);
+        page.setDefaultTimeout(50 * 1000);
     } catch (err) {
         log.error("Failed to launch Web Browser with: " + err.message);
         bot.isProcessingNewMember = false;
@@ -317,9 +310,16 @@ async function getMemberInfo(rowUser, discordUser) {
 
     // need authentification?
     if (page.url().startsWith('https://auth')) {
-        await page.type("input[name='user']",     conf.web.userid);
-        await page.type("input[name='password']", conf.web.password);
-        await page.click('.form > .btn');
+        try {
+            await page.type("input[name='user']",     conf.web.userid);
+            await page.type("input[name='password']", conf.web.password);
+            await page.click('.form > .btn');
+        } catch(err) {
+            log.error("Error while login: " + err.message);
+            bot.isProcessingNewMember = false;
+            return;
+        }
+
         try {
             await page.waitForNavigation();
         } catch(err) {
@@ -437,9 +437,9 @@ async function sendValidationCode(rowUser, discordUser) {
 bot.promote = async function() {
     // we fetch all roles that should be added to the member
     let sql = `
-    select cast(guilds.gid as text) as gid,
-           cast(guilds.mensan_role as text) as rid, -- role id
-           cast(users.did as text) as did
+    select cast(guilds.gid         as char) as gid,
+           cast(guilds.mensan_role as char) as rid, -- role id
+           cast(users.did          as char) as did
     from guilds, members, users
     where guilds.gid = members.gid
       and members.did = users.did
