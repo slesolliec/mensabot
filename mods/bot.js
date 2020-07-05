@@ -238,7 +238,7 @@ bot.sendCode = async function() {
        `select cast(did as char) as did
         from users
         where mid is not null
-          and (state = 'new' or state = 'welcomed')
+          and (state = 'new' or state = 'welcomed' or state = 'found')
         limit 1`);
     if (newUser)
         processNewMensan(newUser.did);
@@ -264,8 +264,13 @@ async function processNewMensan(did) {
         return;
     }
 
-    // that function will also call sendValidationCode();
-    getMemberInfo(rowUser, discordUser);
+    if (rowUser.validation_code) {
+        // we only need to send the code via email
+        sendValidationCode(rowUser, discordUser);
+    } else {
+        // we get member info + generate validation code + send code
+        getMemberInfo(rowUser, discordUser);
+    }
 }
 
 
@@ -357,18 +362,17 @@ async function getMemberInfo(rowUser, discordUser) {
     browser.close();
 
     await db.query("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
-    bot.isProcessingNewMember = false;
 
-    sendValidationCode(rowUser, discordUser);
+    generateValidationCode(rowUser, discordUser);
 }
 
 
 /**
- * Generate and send via email the validation code to the user
+ * Generate the validation code for the user
  * @param {*} rowUser 
  * @param {Discord.User} discordUser 
  */
-async function sendValidationCode(rowUser, discordUser) {
+async function generateValidationCode(rowUser, discordUser) {
 
     // do we have the email
     if (! rowUser.email) {
@@ -376,6 +380,7 @@ async function sendValidationCode(rowUser, discordUser) {
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
         db.query("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
 
+        bot.isProcessingNewMember = false;
         return;
     }
 
@@ -384,7 +389,7 @@ async function sendValidationCode(rowUser, discordUser) {
         return Math.floor(Math.random() * Math.floor(max));
     }
 
-    const validationCode = ''
+    rowUser.validation_code = ''
         + getRandomInt(10)
         + getRandomInt(10)
         + getRandomInt(10)
@@ -392,6 +397,14 @@ async function sendValidationCode(rowUser, discordUser) {
         + getRandomInt(10)
         + getRandomInt(10);
 
+    db.query("update users set validation_code = ? where mid = ?", [rowUser.validation_code, rowUser.mid])
+
+    sendValidationCode(rowUser, discordUser);
+}
+
+
+// send validation code via email
+function sendValidationCode(rowUser, discordUser) {
     // send the email with validation code
     const transporter = nodemailer.createTransport({
         host: conf.smtp.host,
@@ -405,7 +418,7 @@ async function sendValidationCode(rowUser, discordUser) {
 
     const msgWelcome = fs.readFileSync('./messages/email_validation_code.txt', 'utf-8')
         .replace(/##real_name##/g,      rowUser.real_name)
-        .replace(/##validationCode##/g, validationCode)
+        .replace(/##validationCode##/g, rowUser.validation_code)
         .replace(/##botAdminName##/g,   conf.botAdmin.name)
         .replace(/##botAdminEmail##/g,  conf.botAdmin.email);
 
@@ -419,14 +432,15 @@ async function sendValidationCode(rowUser, discordUser) {
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
             console.log("Error sending email to", rowUser, error);
+            bot.isProcessingNewMember = false;
         } else {
             console.log('Email sent: ' + info.response);
-            db.query("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
+            db.query("update users set state = 'vcode_sent' where mid = ?", [rowUser.mid]);
             sendDirectMessage(discordUser, "Un code de validation vient d'être envoyé à ton adresse email."
                + "\nIl ne te reste plus qu'à le recopier ici-même.");
+            bot.isProcessingNewMember = false;
         }
     });
-
 }
 
 
