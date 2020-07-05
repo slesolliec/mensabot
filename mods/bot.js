@@ -187,9 +187,8 @@ async function handleIncomingMessage(message) {
 
         // we store the user Mensa number
         db.query("update users set mid = ? where did = ? and mid is null", [mid, message.author.id]);
-        sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
-            +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
-            +"\nMerci de consulter vos emails dans quelques minutes.");
+        sendDirectMessage(message.author, "J'ai bien enregistré ton numéro d'adhérant: **" + mid + "**"
+            + "\nMerci de patienter pendant que je vérifie ton identité dans l'annuaire de l'association.");
         return;
     }
 
@@ -215,9 +214,9 @@ async function handleIncomingMessage(message) {
         if (theUser.validation_code == vcode) {
             db.query("update users set state='validated' where did = ?", [message.author.id]);
 
-            sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
-                + "Merci d'avoir bien voulu suivre cette procédure.\n"
-                + "Vous allez bientôt pouvoir accéder à tous les salons.\n");
+            sendDirectMessage(message.author, 'Félicitation, ton authentification est maintenant terminé. Tu a désormais accès à la catégorie "GÉNÉRAL" du serveur.'
+                + "\n\nCependant, cette catégorie ne représente qu'une fraction du serveur M's PLO. Afin de parfaire ton inscription et débloquer l’accès à l'entièreté du serveur, **je t'invite à venir te présenter dans le salon dédié**."
+                + "\n\nÀ bientôt sur M's PLO :slight_smile:");
             return;
 
         } else {
@@ -423,8 +422,8 @@ async function sendValidationCode(rowUser, discordUser) {
         } else {
             console.log('Email sent: ' + info.response);
             db.query("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
-            sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
-                + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
+            sendDirectMessage(discordUser, "Un code de validation vient d'être envoyé à ton adresse email."
+               + "\nIl ne te reste plus qu'à le recopier ici-même.");
         }
     });
 
