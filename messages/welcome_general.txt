@@ -1,0 +1,7 @@
+Bonjour **##username##**,
+Je suis **##botname##**, le robot qui est là pour vous aider sur ce serveur.
+Je vous souhaite la bienvenue.
+Afin de vérifier que vous êtes bien un membre de Mensa, pourriez-vous me donner
+**votre numéro d'adhérent Mensa ?**
+Je vous remercie pour votre enthousiaste coopération.
+##botname## 

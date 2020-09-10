@@ -187,9 +187,8 @@ async function handleIncomingMessage(message) {
 
         // we store the user Mensa number
         db.query("update users set mid = ? where did = ? and mid is null", [mid, message.author.id]);
-        sendDirectMessage(message.author, "J'ai bien enregistré votre numéro de Mensa: **" + mid + "**."
-            +"\nJe vais mantenant consulter l'annuaire de Mensa France et vous envoyer un code de confirmation à votre adresse email."
-            +"\nMerci de consulter vos emails dans quelques minutes.");
+        sendDirectMessage(message.author, "J'ai bien enregistré ton numéro d'adhérant: **" + mid + "**"
+            + "\nMerci de patienter pendant que je vérifie ton identité dans l'annuaire de l'association.");
         return;
     }
 
@@ -215,9 +214,9 @@ async function handleIncomingMessage(message) {
         if (theUser.validation_code == vcode) {
             db.query("update users set state='validated' where did = ?", [message.author.id]);
 
-            sendDirectMessage(message.author, "Vous appartenance à Mensa est bien validée.\n"
-                + "Merci d'avoir bien voulu suivre cette procédure.\n"
-                + "Vous allez bientôt pouvoir accéder à tous les salons.\n");
+            sendDirectMessage(message.author, 'Félicitation, ton authentification est maintenant terminé. Tu a désormais accès à la catégorie "GÉNÉRAL" du serveur.'
+                + "\n\nCependant, cette catégorie ne représente qu'une fraction du serveur M's PLO. Afin de parfaire ton inscription et débloquer l’accès à l'entièreté du serveur, **je t'invite à venir te présenter dans le salon dédié**."
+                + "\n\nÀ bientôt sur M's PLO :slight_smile:");
             return;
 
         } else {
@@ -239,7 +238,7 @@ bot.sendCode = async function() {
        `select cast(did as char) as did
         from users
         where mid is not null
-          and (state = 'new' or state = 'welcomed')
+          and (state = 'new' or state = 'welcomed' or state = 'found')
         limit 1`);
     if (newUser)
         processNewMensan(newUser.did);
@@ -265,8 +264,13 @@ async function processNewMensan(did) {
         return;
     }
 
-    // that function will also call sendValidationCode();
-    getMemberInfo(rowUser, discordUser);
+    if (rowUser.validation_code) {
+        // we only need to send the code via email
+        sendValidationCode(rowUser, discordUser);
+    } else {
+        // we get member info + generate validation code + send code
+        getMemberInfo(rowUser, discordUser);
+    }
 }
 
 
@@ -362,18 +366,17 @@ console.log(identite);
     browser.close();
 
     await db.query("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
-    bot.isProcessingNewMember = false;
 
-    sendValidationCode(rowUser, discordUser);
+    generateValidationCode(rowUser, discordUser);
 }
 
 
 /**
- * Generate and send via email the validation code to the user
+ * Generate the validation code for the user
  * @param {*} rowUser 
  * @param {Discord.User} discordUser 
  */
-async function sendValidationCode(rowUser, discordUser) {
+async function generateValidationCode(rowUser, discordUser) {
 
     // do we have the email
     if (! rowUser.email) {
@@ -381,6 +384,7 @@ async function sendValidationCode(rowUser, discordUser) {
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
         db.query("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
 
+        bot.isProcessingNewMember = false;
         return;
     }
 
@@ -389,7 +393,7 @@ async function sendValidationCode(rowUser, discordUser) {
         return Math.floor(Math.random() * Math.floor(max));
     }
 
-    const validationCode = ''
+    rowUser.validation_code = ''
         + getRandomInt(10)
         + getRandomInt(10)
         + getRandomInt(10)
@@ -397,6 +401,14 @@ async function sendValidationCode(rowUser, discordUser) {
         + getRandomInt(10)
         + getRandomInt(10);
 
+    db.query("update users set validation_code = ? where mid = ?", [rowUser.validation_code, rowUser.mid])
+
+    sendValidationCode(rowUser, discordUser);
+}
+
+
+// send validation code via email
+function sendValidationCode(rowUser, discordUser) {
     // send the email with validation code
     const transporter = nodemailer.createTransport({
         host: conf.smtp.host,
@@ -410,7 +422,7 @@ async function sendValidationCode(rowUser, discordUser) {
 
     const msgWelcome = fs.readFileSync('./messages/email_validation_code.txt', 'utf-8')
         .replace(/##real_name##/g,      rowUser.real_name)
-        .replace(/##validationCode##/g, validationCode)
+        .replace(/##validationCode##/g, rowUser.validation_code)
         .replace(/##botAdminName##/g,   conf.botAdmin.name)
         .replace(/##botAdminEmail##/g,  conf.botAdmin.email);
 
@@ -424,14 +436,15 @@ async function sendValidationCode(rowUser, discordUser) {
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
             console.log("Error sending email to", rowUser, error);
+            bot.isProcessingNewMember = false;
         } else {
             console.log('Email sent: ' + info.response);
-            db.query("update users set validation_code = ?, state = 'vcode_sent' where mid = ?", [validationCode, rowUser.mid]);
-            sendDirectMessage(discordUser, "Votre code de validation vient de vous être envoyé par email."
-                + "\nIl suffit maintenant juste de me l'envoyer par message privé.\n");
+            db.query("update users set state = 'vcode_sent' where mid = ?", [rowUser.mid]);
+            sendDirectMessage(discordUser, "Un code de validation vient d'être envoyé à ton adresse email."
+               + "\nIl ne te reste plus qu'à le recopier ici-même.");
+            bot.isProcessingNewMember = false;
         }
     });
-
 }
 
 
