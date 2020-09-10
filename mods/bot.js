@@ -285,6 +285,7 @@ async function getMemberInfo(rowUser, discordUser) {
         log.debug("Launching web browser");
         browser = await puppeteer.launch({
             headless: conf.web.headless,
+    //        args: ['--no-sandbox'],
     //        executablePath: 'chromium-browser',
             userDataDir: 'puppetdir'
         });
@@ -330,7 +331,10 @@ async function getMemberInfo(rowUser, discordUser) {
 
     // get data
     try {
+	log.debug("try to read identity");
         let identite = await page.$eval('#identite', el => el.innerText);
+	log.debug("managed to read identity");
+console.log(identite);
         identite = identite.split('\n')[0].split('-');
         rowUser.region = identite.pop().trim();
         identite.pop();
