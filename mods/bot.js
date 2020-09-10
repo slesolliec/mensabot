@@ -5,6 +5,7 @@ const db      = require('./db');
 const fs      = require('fs');
 const log     = require('./log');
 const puppeteer  = require('puppeteer');
+const cheerio    = require('cheerio');
 const nodemailer = require('nodemailer');
 
 const bot = {};
@@ -276,6 +277,7 @@ async function processNewMensan(did) {
 
 /**
  * Get Mensa Member data from online Mensa address book
+ * Warning!!! This function is too long and complicated and mixes too many things
  * @param {*} rowUser
  * @param {Discord.User} discordUser
  */
@@ -333,12 +335,22 @@ async function getMemberInfo(rowUser, discordUser) {
         log.debug('  New page url: ' + page.url());
     }
 
+    // we get the content of the page
+    // let bodyHTML = await page.evaluate(() => document.documentElement.outerHTML);
+    let bodyHTML = await page.evaluate(() => document.body.innerHTML);
+    browser.close();
+
+    // get rid of all the trash
+    bodyHTML = bodyHTML.slice(bodyHTML.indexOf('<div id="identite">')).slice(0, bodyHTML.indexOf('<!-- #content'));
+    // log.debug(bodyHTML);
+
+    // parse as xml tree
+    const menxml = cheerio.load(bodyHTML);
+    
     // get data
     try {
-	log.debug("try to read identity");
-        let identite = await page.$eval('#identite', el => el.innerText);
-	log.debug("managed to read identity");
-console.log(identite);
+        let identite = menxml('#identite').text();
+	    log.debug("managed to read identity");
         identite = identite.split('\n')[0].split('-');
         rowUser.region = identite.pop().trim();
         identite.pop();
@@ -355,7 +367,7 @@ console.log(identite);
     }
 
     try {
-        rowUser.email = await page.$eval('div.email a', el => el.innerText);
+        rowUser.email = menxml('div.email a').text();
         rowUser.email = rowUser.email.trim().split(' ').join('');
     } catch (err) {
         console.log("Mensa member does not seem to have an email address.");
@@ -363,7 +375,6 @@ console.log(identite);
     }
 
     console.log('Found member info: ' + rowUser.real_name + ' - ' + rowUser.region + ' - ' + rowUser.email);
-    browser.close();
 
     await db.query("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
 
