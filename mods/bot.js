@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const client  = new Discord.Client();
+const client  = new Discord.Client({ ws: { intents: Discord.Intents.ALL }});
 const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
