@@ -215,8 +215,13 @@ async function handleIncomingMessage(message) {
         if (theUser.validation_code == vcode) {
             db.query("update users set state='validated' where did = ?", [message.author.id]);
 
-            sendDirectMessage(message.author, 'Félicitation, ton authentification est maintenant terminé. Tu a désormais accès à la catégorie "GÉNÉRAL" du serveur.'
-                + "\n\nCependant, cette catégorie ne représente qu'une fraction du serveur M's PLO. Afin de parfaire ton inscription et débloquer l’accès à l'entièreté du serveur, **je t'invite à venir te présenter dans le salon dédié**."
+            sendDirectMessage(message.author, "Félicitation, ton authentification est maintenant terminée. Tu as désormais accès à la catégorie \"GÉNÉRAL\" du serveur."
+                + "\n\nCependant, cette catégorie ne représente qu'une fraction du serveur M's PLO. Afin de parfaire ton inscription et débloquer l’accès à l'entièreté du serveur,"
+                + " **je t'invite à venir te présenter dans le salon #présentation.** Pour ce faire, merci de compléter le modèle ci-dissous et de le poster dans le salon dédié"
+                + " (la présentation des autres membres apparaîtra en même temps que tu publiera la tienne) :"
+                + "\n\n__[prénom] [âge]__"
+                + "\n__[profession]__"
+                + "\n__[Quelques mots sur toi. Par exemple : depuis quand es-tu à Mensa, ton parcours, tes passions dans la vie, etc]__"
                 + "\n\nÀ bientôt sur M's PLO :slight_smile:");
             return;
 
