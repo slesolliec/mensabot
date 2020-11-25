@@ -36,7 +36,7 @@ async function processOneGuild(guild) {
         db.query("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
     
     // list roles of guild
-    guild.roles.cache.map(role => console.log('rôle:', role.name, 'id:', role.id));
+    guild.roles.cache.map(role => console.log('rôle:', '[', role.guild.name, ']', role.name, 'id:', role.id));
 
     // we get the list of members of that guild
     guild.members.fetch()
