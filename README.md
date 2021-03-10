@@ -12,11 +12,12 @@ This is currently a test ground for playing with nodeJS and Discord.
 
 ## Modules used
 
-Here a the main modules used in this small application:
+Here a the main npm packages used in this small application:
 
-1. [sqlite3](https://www.npmjs.com/package/sqlite3). Tutorials: [SQLite Node](https://www.sqlitetutorial.net/sqlite-nodejs/)
+1. mysql for the database
 1. [Discord.js](https://discord.js.org/)
 1. [Puppeteer](https://pptr.dev/). (Maybe for later: [How to set up a Headless Chrome Node.js server inside a docker container](https://blog.logrocket.com/how-to-set-up-a-headless-chrome-node-js-server-in-docker/)
+1. nodemailer : for sending emails
 
 
 ## Liste des trucs à faire
