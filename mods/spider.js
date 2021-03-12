@@ -112,16 +112,17 @@ spider.searchMensannuaire = async function (mid) {
     bodyHTML = bodyHTML.slice(0, bodyHTML.indexOf('<div class="sous-titre">Savoir-faire</div>'));
     rowUser.real_name = bodyHTML.slice(0, bodyHTML.indexOf('</span>')).trim();
 
+
     // get region
     bodyHTML = cutBeforeIncluded(bodyHTML, '>');
     bodyHTML = cutBeforeIncluded(bodyHTML, '-');
     bodyHTML = cutBeforeIncluded(bodyHTML, '-');
-    rowUser.region = bodyHTML.slice(0, bodyHTML.indexOf('<')).trim();
+    rowUser.region = bodyHTML.slice(0, bodyHTML.indexOf('<')).trim().slice(0, 5);
 
     // get email
     if (bodyHTML.indexOf('href="mailto:')) {
         bodyHTML = cutBeforeIncluded(bodyHTML, 'href="mailto:');
-        rowUser.email = bodyHTML.slice(0, bodyHTML.indexOf('"')).trim();
+        rowUser.email = bodyHTML.slice(0, bodyHTML.indexOf('"')).trim().split(' ').join('');
     }
 	// log.debug(bodyHTML);
 	// console.log(rowUser);

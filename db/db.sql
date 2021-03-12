@@ -17,7 +17,11 @@ CREATE TABLE users (
 -- state =
 --     new : nouveau contact
 --     welcomed : le message de bienvenue lui a été envoyé
---     validationCodeSent : le code de validation lui a été envoyé
+--     vcode_sent : le code de validation lui a été envoyé
+--     found : la fiche du mensan a bien été trouvée dans l'annuaire
+--     err_no_name: le nom  n'a pas été trouvé dans l'annuaire de Mensa
+--     err_no_mail: l'email n'a pas été trouvé dans l'annuaire de Mensa
+--     in_error : il manque des infos nécessaires : nom, ou email, ....
 --     validated : utilisteur validé en tant que Mensan
 
 

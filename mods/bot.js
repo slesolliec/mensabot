@@ -4,13 +4,9 @@ const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
 const log     = require('./log');
-const puppeteer  = require('puppeteer');
-const cheerio    = require('cheerio');
 const nodemailer = require('nodemailer');
 
 const bot = {};
-
-bot.isProcessingNewMember = false;
 
 client.once('ready', () => {
     log.debug('Bot is connected to Discord');
@@ -240,184 +236,60 @@ async function handleIncomingMessage(message) {
  */
 bot.sendCode = async function() {
     // log.debug("Any new user?");
-    const newUser = await db.getOne(
-       `select cast(did as char) as did
+    const newUsers = await db.query(
+       `select *
         from users
-        where mid is not null
-          and (state = 'new' or state = 'welcomed' or state = 'found')
+        where state = 'found'
         limit 1`);
-    if (newUser)
-        processNewMensan(newUser.did);
+    newUsers.map(processFoundMensan);
 }
 
 
-async function processNewMensan(did) {
-
-    // handling lock
-    if (bot.isProcessingNewMember) {
-        log.debug("Bot is already browsing the web ...");
-        return;
-    }
-    bot.isProcessingNewMember = true;
-
-    const rowUser = await db.getUser(did);
+async function processFoundMensan(rowUser) {
 
     // get discord user
     let discordUser = client.users.cache.get(rowUser.did);
     if (! discordUser) {
         log.error("Impossible de trouver l'utilisateur "+ rowUser.did + " / " + rowUser.mid);
-        bot.isProcessingNewMember = false;
         return;
     }
 
-    if (rowUser.validation_code) {
-        // we only need to send the code via email
-        sendValidationCode(rowUser, discordUser);
-    } else {
-        // we get member info + generate validation code + send code
-        getMemberInfo(rowUser, discordUser);
-    }
-}
-
-
-/**
- * Get Mensa Member data from online Mensa address book
- * Warning!!! This function is too long and complicated and mixes too many things
- * @param {*} rowUser
- * @param {Discord.User} discordUser
- */
-async function getMemberInfo(rowUser, discordUser) {
-
-    log.debug("Getting info of member " + rowUser.mid + " (" + rowUser.discord_name + ")");
-
-    // launch puppeteer
-    let browser, page;
-    try {
-        log.debug("Launching web browser");
-        browser = await puppeteer.launch({
-            headless: conf.web.headless,
-    //        args: ['--no-sandbox'],
-    //        executablePath: 'chromium-browser',
-            userDataDir: 'puppetdir'
-        });
-        log.debug("Opening new page");
-        page = await browser.newPage();
-        page.setDefaultTimeout(50 * 1000);
-    } catch (err) {
-        log.error("Failed to launch Web Browser with: " + err.message);
-        bot.isProcessingNewMember = false;
-        return;
-    }
-
-    const infoPageUrl = conf.web.url + rowUser.mid;
-    log.debug("  Going to " + infoPageUrl);
-    try {
-        await page.goto(infoPageUrl);
-    } catch(err) {
-        log.error(err.message);
-        bot.isProcessingNewMember = false;
-        return;
-    }
-    log.debug('  Current page is ' + page.url());
-
-    // need authentification?
-    if (page.url().startsWith('https://auth')) {
-        try {
-            await page.type("input[name='user']",     conf.web.userid);
-            await page.type("input[name='password']", conf.web.password);
-            await page.click('.form > .btn');
-        } catch(err) {
-            log.error("Error while login: " + err.message);
-            bot.isProcessingNewMember = false;
-            return;
-        }
-
-        try {
-            await page.waitForNavigation();
-        } catch(err) {
-            log.error("Error after login: " + err.message);
-        }
-        log.debug('  New page url: ' + page.url());
-    }
-
-    // we get the content of the page
-    // let bodyHTML = await page.evaluate(() => document.documentElement.outerHTML);
-    let bodyHTML = await page.evaluate(() => document.body.innerHTML);
-    browser.close();
-
-    // get rid of all the trash
-    bodyHTML = bodyHTML.slice(bodyHTML.indexOf('<div id="identite">')).slice(0, bodyHTML.indexOf('<!-- #content'));
-    // log.debug(bodyHTML);
-
-    // parse as xml tree
-    const menxml = cheerio.load(bodyHTML);
-    
-    // get data
-    try {
-        let identite = menxml('#identite').text();
-	    log.debug("managed to read identity");
-        identite = identite.split('\n')[0].split('-');
-        rowUser.region = identite.pop().trim();
-        identite.pop();
-        rowUser.real_name = identite.join('-').trim();
-    } catch (err) {
-        log.warning("Mensa member does not seem to have a name. We probably don't have a good Mensa id");
-        log.error(err.message);
-
-        sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre fiche dans l'annuaire des membres de Mensa."
+    // check he has a name
+    if ( ! rowUser.real_name) {
+        log.warning("Mensa member " + rowUser.mid + " does not seem to have a name. We probably don't have a good Mensa id");
+        console.log(rowUser);
+        sendDirectMessage(discordUser, "Ah mince, je n'arrive pas à trouver votre nom dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider votre état de membre de Mensa.");
-        db.query("update users set state = 'in_error' where did = ?", [rowUser.did]);
-        bot.isProcessingNewMember = false;
+        db.query("update users set state = 'err_no_name' where did = ?", [rowUser.did]);
         return;
     }
 
-    try {
-        rowUser.email = menxml('div.email a').text();
-        rowUser.email = rowUser.email.trim().split(' ').join('');
-    } catch (err) {
+    // check he has email
+    if ( ! rowUser.email) {
         console.log("Mensa member does not seem to have an email address.");
-        console.log(err.message);
-    }
-
-    console.log('Found member info: ' + rowUser.real_name + ' - ' + rowUser.region + ' - ' + rowUser.email);
-
-    await db.query("update users set real_name = ?, region = ?, email = ?, state = 'found' where mid = ?", [rowUser.real_name, rowUser.region, rowUser.email, rowUser.mid]);
-
-    generateValidationCode(rowUser, discordUser);
-}
-
-
-/**
- * Generate the validation code for the user
- * @param {*} rowUser 
- * @param {Discord.User} discordUser 
- */
-async function generateValidationCode(rowUser, discordUser) {
-
-    // do we have the email
-    if (! rowUser.email) {
+        console.log(rowUser);
         sendDirectMessage(discordUser, "Ah mince, votre adresse email n'est pas présente dans l'annuaire des membres de Mensa."
             + "\nMerci de contacter un des administrateurs du serveur pour valider **manuellement** votre état de membre de Mensa.");
         db.query("update users set state = 'err_no_mail' where did = ?", [rowUser.did]);
-
-        bot.isProcessingNewMember = false;
         return;
     }
 
-    // we create the validation code
-    function getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
+    // we create the validation code if not already created
+    if ( ! rowUser.validation_code) {
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * Math.floor(max));
+        }
+    
+        rowUser.validation_code = ''
+            + getRandomInt(10)
+            + getRandomInt(10)
+            + getRandomInt(10)
+            + getRandomInt(10)
+            + getRandomInt(10)
+            + getRandomInt(10);
+    
+        db.query("update users set validation_code = ? where mid = ?", [rowUser.validation_code, rowUser.mid])
     }
-
-    rowUser.validation_code = ''
-        + getRandomInt(10)
-        + getRandomInt(10)
-        + getRandomInt(10)
-        + getRandomInt(10)
-        + getRandomInt(10)
-        + getRandomInt(10);
-
-    db.query("update users set validation_code = ? where mid = ?", [rowUser.validation_code, rowUser.mid])
 
     sendValidationCode(rowUser, discordUser);
 }
@@ -452,13 +324,11 @@ function sendValidationCode(rowUser, discordUser) {
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
             console.log("Error sending email to", rowUser, error);
-            bot.isProcessingNewMember = false;
         } else {
             console.log('Email sent: ' + info.response);
             db.query("update users set state = 'vcode_sent' where mid = ?", [rowUser.mid]);
             sendDirectMessage(discordUser, "Un code de validation vient d'être envoyé à ton adresse email."
                + "\nIl ne te reste plus qu'à le recopier ici-même.");
-            bot.isProcessingNewMember = false;
         }
     });
 }

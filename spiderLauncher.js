@@ -19,14 +19,42 @@ spiderlauncher.fillEmptyNames = async function() {
 		console.log("== WHO ==\n", drWho);
 		const found = await spider.searchMensannuaire(drWho.mid);
 		console.log("== Found ==\n", found);
-		await db.query("update users set real_name = \"" + found.real_name +"\" where mid = " + found.mid);
+		await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
 		if ( ! drWho.region) {
-			await db.query("update users set region = \""+ found.region    +"\" where mid = " + found.mid);
+			await db.query("update users set region = ? where mid = ?",  [found.region, found.mid]);
 		}
 	}
 
 	db.end();
 }
+
+
+spiderlauncher.findNewMensans = async function() {
+	const newUsers = await db.query(`
+		select *
+		from users
+		where state='welcomed'
+		  and mid is not null
+		order by mid desc`);
+
+	while (newUsers.length) {
+		const newUser = newUsers.pop();
+		console.log("== WHO ==\n", drWho);
+		const found = await spider.searchMensannuaire(drWho.mid);
+		console.log("== Found ==\n", found);
+		await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
+		if (found.region) {
+			await db.query("update users set region = ? where mid = ?",  [found.region, found.mid]);
+		}
+		if (found.email) {
+			await db.query("update users set email = ? where mid = ?",  [found.email, found.mid]);
+		}
+	}
+}
+
+
+
+
 
 
 spiderlauncher.fillEmptyNames();

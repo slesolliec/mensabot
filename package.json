@@ -14,7 +14,6 @@
   "author": "Stéphane Le Solliec <stephane@metacites.net>",
   "license": "ISC",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.3",
     "colors": "^1.4.0",
     "discord.js": "^12.2.0",
     "fs": "0.0.1-security",
