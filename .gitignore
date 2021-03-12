@@ -2,6 +2,7 @@ configs.js
 db/chatbot.sqlite3
 node_modules/
 puppetdir/
+dumps/*.sql
 
 logs
 *.log

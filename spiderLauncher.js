@@ -44,7 +44,13 @@ spiderlauncher.findNewMensans = async function() {
 	while (newUsers.length) {
 		const drWho = newUsers.pop();
 		console.log("== WHO ==\n", drWho);
-		const found = await spider.searchMensannuaire(drWho.mid);
+		try {
+			const found = await spider.searchMensannuaire(drWho.mid);
+		} catch (err) {
+			console.error("Failed visiting page of mensan member " + drWho.mid);
+			console.error(err);
+			continue;
+		}
 		console.log("== Found ==\n", found);
 		if (found.real_name) {
 			await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
@@ -65,4 +71,6 @@ spiderlauncher.findNewMensans = async function() {
 
 
 // spiderlauncher.fillEmptyNames();
-spiderlauncher.findNewMensans();
+// spiderlauncher.findNewMensans();
+
+setInterval(spiderlauncher.findNewMensans, 120 * 1000);
