@@ -265,7 +265,16 @@ bot.sendCode = async function() {
     if (bot.isMaintenance) return;
 
     const newUsers = await db.query(
-       `select *
+        `select cast(did as char) as did,
+            mid,
+            discord_name,
+            real_name,
+            region,
+            departement,
+            email,
+            state,
+            validation_code,
+            validation_trials
         from users
         where state = 'found'
         limit 1`);
