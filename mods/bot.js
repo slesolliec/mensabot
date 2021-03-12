@@ -8,6 +8,8 @@ const nodemailer = require('nodemailer');
 
 const bot = {};
 
+bot.isMaintenance = false;
+
 client.once('ready', () => {
     log.debug('Bot is connected to Discord');
 
@@ -89,6 +91,9 @@ async function reMember(member) {
 
 // welcome new users
 bot.welcome = async function() {
+
+    if (bot.isMaintenance) return;
+
     // we look for a new user
     const newUser = await db.getOne("select cast(did as char) as did, discord_name from users where state = 'new' limit 1", []);
 
@@ -139,6 +144,27 @@ async function handleIncomingMessage(message) {
     // logs
     // console.log(message);
     log.msgin(message.author.username + ' / ' + message.author.id, message.content);
+
+    // commands from admin
+    if (message.author.id == conf.botAdmin.did) {
+        switch (message.content) {
+            case 'maintenance':
+                bot.isMaintenance = true;
+                client.user.setPresence({ activity: { name: 'En maintenance.' }, status: 'dnd' });
+                break;
+            case 'wake up':
+            case 'wakeup':
+            case 'wakup':
+                bot.isMaintenance = false;
+                client.user.setPresence({ activity: { name: 'A votre service.' }, status: 'idle' });
+                break;
+        }
+    }
+
+    if (bot.isMaintenance) {
+        sendDirectMessage(message.author, "Je suis en maintenance. Revenez plus tard.");
+        return;
+    }
 
     // get user
     const theUser = await db.getUser(message.author.id);
@@ -236,6 +262,8 @@ async function handleIncomingMessage(message) {
  */
 bot.sendCode = async function() {
     // log.debug("Any new user?");
+    if (bot.isMaintenance) return;
+
     const newUsers = await db.query(
        `select *
         from users
@@ -246,6 +274,8 @@ bot.sendCode = async function() {
 
 
 async function processFoundMensan(rowUser) {
+
+    if (bot.isMaintenance) return;
 
     // get discord user
     let discordUser = client.users.cache.get(rowUser.did);
@@ -297,6 +327,9 @@ async function processFoundMensan(rowUser) {
 
 // send validation code via email
 function sendValidationCode(rowUser, discordUser) {
+
+    if (bot.isMaintenance) return;
+
     // send the email with validation code
     const transporter = nodemailer.createTransport({
         host: conf.smtp.host,
@@ -338,6 +371,9 @@ function sendValidationCode(rowUser, discordUser) {
  * We give the discord roles to all who deserve it
  */
 bot.promote = async function() {
+
+    if (bot.isMaintenance) return;
+
     // we fetch all roles that should be added to the member
     let sql = `
     select cast(guilds.gid         as char) as gid,
@@ -367,6 +403,7 @@ async function giveRoleToMember(row) {
     // it's only members who can
 
     // console.log(row);
+    if (bot.isMaintenance) return;
 
     const guild = client.guilds.cache.get(row.gid);
     if (! guild) {

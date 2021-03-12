@@ -3,6 +3,7 @@ const configs = {
 	mysql: {
 		host: '127.0.0.1',
 		user: 'mensabot',
+		port: 3306,
 		password: '***',
 		database: 'mensabot'
 	},
@@ -13,7 +14,8 @@ const configs = {
 	},
 	botAdmin: {
 		name:  "Name of Admin",
-		email: "admin@example.com"
+		email: "admin@example.com",
+		did: 396752710487113729
 	},
 	web: {
 		userid:   "",
