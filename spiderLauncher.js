@@ -19,16 +19,20 @@ spiderlauncher.fillEmptyNames = async function() {
 		console.log("== WHO ==\n", drWho);
 		const found = await spider.searchMensannuaire(drWho.mid);
 		console.log("== Found ==\n", found);
-		await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
+		await db.query("update users set real_name = ? where mid = ?", [found.real_name, found.mid]);
 		if ( ! drWho.region) {
 			await db.query("update users set region = ? where mid = ?",  [found.region, found.mid]);
 		}
 	}
 
 	db.end();
+	spider.close();
 }
 
 
+/**
+ * Takes users from state 'welcomed' to state 'found' or 'err_not_found'
+ */
 spiderlauncher.findNewMensans = async function() {
 	const newUsers = await db.query(`
 		select *
@@ -38,23 +42,27 @@ spiderlauncher.findNewMensans = async function() {
 		order by mid desc`);
 
 	while (newUsers.length) {
-		const newUser = newUsers.pop();
+		const drWho = newUsers.pop();
 		console.log("== WHO ==\n", drWho);
 		const found = await spider.searchMensannuaire(drWho.mid);
 		console.log("== Found ==\n", found);
-		await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
-		if (found.region) {
-			await db.query("update users set region = ? where mid = ?",  [found.region, found.mid]);
-		}
-		if (found.email) {
-			await db.query("update users set email = ? where mid = ?",  [found.email, found.mid]);
+		if (found.real_name) {
+			await db.query("update users set real_name = ?, state='found' where mid = ?", [found.real_name, found.mid]);
+			if (found.region) {
+				await db.query("update users set region = ? where mid = ?",  [found.region, found.mid]);
+			}
+			if (found.email) {
+				await db.query("update users set email = ? where mid = ?",  [found.email, found.mid]);
+			}
+		} else {
+			await db.query("update users state='err_not_found' where mid = ?", [found.mid]);
 		}
 	}
+
+	db.end();
+	spider.close();
 }
 
 
-
-
-
-
-spiderlauncher.fillEmptyNames();
+// spiderlauncher.fillEmptyNames();
+spiderlauncher.findNewMensans();

@@ -70,7 +70,6 @@ async function getHTMLbody(mid) {
     // we get the content of the page
     // let bodyHTML = await page.evaluate(() => document.documentElement.outerHTML);
     let bodyHTML = await page.evaluate(() => document.body.innerHTML);
-    // browser.close();
 
     // get rid of all the trash
     bodyHTML = bodyHTML.slice(bodyHTML.indexOf('<div id="identite">')).slice(0, bodyHTML.indexOf('<!-- #content'));
@@ -128,6 +127,12 @@ spider.searchMensannuaire = async function (mid) {
 	// console.log(rowUser);
     return rowUser;
 }
+
+spider.close = async function() {
+    await browser.close();
+    log.debug('Browser closed');
+}
+
 
 
 module.exports = spider;

@@ -8,6 +8,7 @@ const conf  = require('../configs')
 let pool = mysql.createPool({
 	connectionLimit: 10,
 	host     : conf.mysql.host,
+	port     : conf.mysql.port,
 	user     : conf.mysql.user,
 	password : conf.mysql.password,
 	database : conf.mysql.database,
