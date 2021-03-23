@@ -44,8 +44,9 @@ spiderlauncher.findNewMensans = async function() {
 	while (newUsers.length) {
 		const drWho = newUsers.pop();
 		console.log("== WHO ==\n", drWho);
+		let found;
 		try {
-			const found = await spider.searchMensannuaire(drWho.mid);
+			found = await spider.searchMensannuaire(drWho.mid);
 		} catch (err) {
 			console.error("Failed visiting page of mensan member " + drWho.mid);
 			console.error(err);
