@@ -44,9 +44,15 @@ spiderlauncher.findNewMensans = async function() {
 		  and mid is not null
 		order by mid desc`);
 	} catch (error) {
-		log.error("Error trying to find new mensan in db.");
-		console.error(error);
-		process.exit();
+		if (error.code == 'POOL_CLOSED') {
+			log.error("db connection pool was closed.");
+//			db.end();
+			return;
+		} else {
+			log.error("Error trying to find new mensan in db.");
+			console.error(error);
+			process.exit();
+		}
 	}
 
 	while (newUsers.length) {
@@ -74,7 +80,6 @@ spiderlauncher.findNewMensans = async function() {
 		}
 	}
 
-	db.end();
 	spider.close();
 }
 
@@ -82,4 +87,4 @@ spiderlauncher.findNewMensans = async function() {
 // spiderlauncher.fillEmptyNames();
 spiderlauncher.findNewMensans();
 
-setInterval(spiderlauncher.findNewMensans, 120 * 1000);
+setInterval(spiderlauncher.findNewMensans, 60 * 1000);

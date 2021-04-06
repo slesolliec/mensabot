@@ -13,7 +13,8 @@ let pool = mysql.createPool({
 	password : conf.mysql.password,
 	database : conf.mysql.database,
 	charset  : 'utf8mb4',
-	timezone : 'Z'
+	timezone : 'Z',
+  connectTimeout: 120 * 1000
 })
 
 pool.getConnection((err, connection) => {

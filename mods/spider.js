@@ -131,8 +131,8 @@ spider.searchMensannuaire = async function (mid) {
 spider.close = async function() {
     if (browser) {
         await browser.close();
+        log.debug('Browser closed');
     }
-    log.debug('Browser closed');
 }
 
 
