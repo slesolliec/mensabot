@@ -116,13 +116,21 @@ bot.welcome = async function() {
 
     if (bot.isMaintenance) return;
 
-    // we look for a new user
-    const newUser = await db.getOne("select did, discord_name from users where state = 'new' limit 1", []);
+    // we look for a new user that belongs to a guild that is active (= mensan_role not null)
+    const newUser = await db.getOne(`
+        select users.did, users.discord_name
+        from users, members, guilds
+        where users.state = 'new'
+          and users.did = members.did
+          and members.gid = guilds.gid
+          and guilds.mensan_role is not null
+        limit 1
+        `, []);
 
     if (! newUser) return;
 
     // compose welcome message
-    const msgWelcome = await getMessage(newUser, 'welcome')
+    let msgWelcome = await getMessage(newUser, 'welcome')
         .replace(/##username##/g, newUser.discord_name)
         .replace(/##botname##/g, client.user.username);
 
