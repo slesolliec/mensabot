@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+
+  m7mock-db:
+    build:
+      dockerfile: docker/db.Dockerfile
+      context: .
+    ports:
+      - 3333:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mensabot
+      MYSQL_USER: mensabot
+      MYSQL_PASSWORD: ancrage
+
