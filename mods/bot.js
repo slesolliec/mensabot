@@ -89,18 +89,40 @@ async function reMember(member) {
 }
 
 
+/**
+ * This gets the message to send to a user. Each guild has its set of personnal messages.
+ * @param {*} newUser 
+ * @param {string} type: type of the message: can be 'welcome' or 'validated'
+ * @returns {string} : template of the message
+ */
+async function getMessage(newUser, type) {
+    // we get the guild of the user
+    const guild = await db.getOne("select * from guilds where did = ? limit 1", [newUser.did]);
+
+    if (! guild) {
+        log.error("user " + newUser.did + " has no guild");
+        throw "user " + newUser.did + " has no guild";
+    }
+
+    // we read the guild's message
+    const msg = fs.readFileSync('./messages/guild_' + guild.gid + '/' + type + '.txt', 'utf-8');
+
+    return msg;
+}
+
+
 // welcome new users
 bot.welcome = async function() {
 
     if (bot.isMaintenance) return;
 
     // we look for a new user
-    const newUser = await db.getOne("select cast(did as char) as did, discord_name from users where state = 'new' limit 1", []);
+    const newUser = await db.getOne("select did, discord_name from users where state = 'new' limit 1", []);
 
     if (! newUser) return;
 
     // compose welcome message
-    const msgWelcome = fs.readFileSync('./messages/welcome.txt', 'utf-8')
+    const msgWelcome = await getMessage(newUser, 'welcome')
         .replace(/##username##/g, newUser.discord_name)
         .replace(/##botname##/g, client.user.username);
 
@@ -237,14 +259,7 @@ async function handleIncomingMessage(message) {
         if (theUser.validation_code == vcode) {
             db.query("update users set state='validated' where did = ?", [message.author.id]);
 
-            sendDirectMessage(message.author, "Félicitation, ton authentification est maintenant terminée. Tu as désormais accès à la catégorie \"GÉNÉRAL\" du serveur."
-                + "\n\nCependant, cette catégorie ne représente qu'une fraction du serveur M's PLO. Afin de parfaire ton inscription et débloquer l’accès à l'entièreté du serveur,"
-                + " **je t'invite à venir te présenter dans le salon #présentation.** Pour ce faire, merci de compléter le modèle ci-dissous et de le poster dans le salon dédié"
-                + " (la présentation des autres membres apparaîtra en même temps que tu publiera la tienne) :"
-                + "\n\n__[prénom] [âge]__"
-                + "\n__[profession]__"
-                + "\n__[Quelques mots sur toi. Par exemple : depuis quand es-tu à Mensa, ton parcours, tes passions dans la vie, etc]__"
-                + "\n\nÀ bientôt sur M's PLO :slight_smile:");
+            sendDirectMessage(message.author, await getMessage(theUser, 'validated'));
             return;
 
         } else {
@@ -350,7 +365,7 @@ function sendValidationCode(rowUser, discordUser) {
         }
     });
 
-    const msgWelcome = fs.readFileSync('./messages/email_validation_code.txt', 'utf-8')
+    const msgWelcome = await getMessage(rowUser, 'email_validation_code')
         .replace(/##real_name##/g,      rowUser.real_name)
         .replace(/##validationCode##/g, rowUser.validation_code)
         .replace(/##botAdminName##/g,   conf.botAdmin.name)

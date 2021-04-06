@@ -14,7 +14,8 @@ let pool = mysql.createPool({
 	database : conf.mysql.database,
 	charset  : 'utf8mb4',
 	timezone : 'Z',
-  connectTimeout: 120 * 1000
+  connectTimeout: 120 * 1000,
+  supportBigNumbers: true
 })
 
 pool.getConnection((err, connection) => {
