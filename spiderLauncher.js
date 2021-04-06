@@ -1,6 +1,7 @@
 // this looks at the database and fetches info from the annuaire
 
 const db  = require('./mods/db');
+const log = require('./mods/log');
 const spider = require('./mods/spider')
 
 const spiderlauncher = {};
@@ -34,12 +35,19 @@ spiderlauncher.fillEmptyNames = async function() {
  * Takes users from state 'welcomed' to state 'found' or 'err_not_found'
  */
 spiderlauncher.findNewMensans = async function() {
-	const newUsers = await db.query(`
+	let newUsers;
+	try {
+		newUsers = await db.query(`
 		select *
 		from users
 		where state='welcomed'
 		  and mid is not null
 		order by mid desc`);
+	} catch (error) {
+		log.error("Error trying to find new mensan in db.");
+		console.error(error);
+		process.exit();
+	}
 
 	while (newUsers.length) {
 		const drWho = newUsers.pop();
@@ -72,6 +80,6 @@ spiderlauncher.findNewMensans = async function() {
 
 
 // spiderlauncher.fillEmptyNames();
-// spiderlauncher.findNewMensans();
+spiderlauncher.findNewMensans();
 
 setInterval(spiderlauncher.findNewMensans, 120 * 1000);
