@@ -68,6 +68,7 @@ async function getInfo(menid) {
     const menxml = cheerio.load(bodyHTML);
     log.debug(menxml('#identite').text());
     
+    log.debug(menxml('div.email a').text());
 
     return;
 
