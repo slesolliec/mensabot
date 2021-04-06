@@ -72,7 +72,7 @@ async function getHTMLbody(mid) {
     let bodyHTML = await page.evaluate(() => document.body.innerHTML);
 
     // get rid of all the trash
-    bodyHTML = bodyHTML.slice(bodyHTML.indexOf('<div id="identite">')).slice(0, bodyHTML.indexOf('<!-- #content'));
+    bodyHTML = bodyHTML.slice(bodyHTML.indexOf('<div id="fiche-perso"') + 1).slice(0, bodyHTML.indexOf('<!-- #content'));
     // log.debug(bodyHTML);
     return bodyHTML;
 }
@@ -105,6 +105,7 @@ spider.searchMensannuaire = async function (mid) {
     rowUser.mid = mid;
 
     bodyHTML = await getHTMLbody(rowUser.mid);
+	// log.debug("BODY: \n" + bodyHTML);
 
     // get name of Mensan
     bodyHTML = cutBeforeIncluded(bodyHTML, '<span class="nom">');
@@ -123,13 +124,14 @@ spider.searchMensannuaire = async function (mid) {
         bodyHTML = cutBeforeIncluded(bodyHTML, 'href="mailto:');
         rowUser.email = bodyHTML.slice(0, bodyHTML.indexOf('"')).trim().split(' ').join('');
     }
-	// log.debug(bodyHTML);
 	// console.log(rowUser);
     return rowUser;
 }
 
 spider.close = async function() {
-    await browser.close();
+    if (browser) {
+        await browser.close();
+    }
     log.debug('Browser closed');
 }
 
