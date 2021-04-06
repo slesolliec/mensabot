@@ -10,6 +10,8 @@ async function dump_db() {
 	try {
 		const cmd = 'mysqldump -u ' + conf.mysql.user + ' -p' + conf.mysql.password
 			+ ' --no-tablespaces ' + conf.mysql.database
+			+ ' -h ' + conf.mysql.host
+			+ ' -P ' + conf.mysql.port
 			+ ' > dumps/mensabot_dump_' + moment().format('YYYY-MM-DD') + '.sql';
 		const { stdout, stderr } = await exec(cmd);
 		console.log('stdout:', stdout);
