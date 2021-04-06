@@ -350,7 +350,7 @@ async function processFoundMensan(rowUser) {
 
 
 // send validation code via email
-function sendValidationCode(rowUser, discordUser) {
+async function sendValidationCode(rowUser, discordUser) {
 
     if (bot.isMaintenance) return;
 
