@@ -97,7 +97,7 @@ async function reMember(member) {
  */
 async function getMessage(newUser, type) {
     // we get the guild of the user
-    const guild = await db.getOne("select * from guilds where did = ? limit 1", [newUser.did]);
+    const guild = await db.getOne("select * from members where did = ? limit 1", [newUser.did]);
 
     if (! guild) {
         log.error("user " + newUser.did + " has no guild");
