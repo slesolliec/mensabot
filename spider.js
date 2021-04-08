@@ -16,6 +16,7 @@ async function getDataFromMensannuaire(mid) {
 		let resp = await needle("get","https://auth.mensa-france.net/");
 		let $ = cheerio.load(resp.body);
 		const token = $('#token').attr('value');
+		log.debug("got token " + token);
 
 		// we get the cookie
 		resp = await needle("post","https://auth.mensa-france.net/", {
@@ -24,6 +25,7 @@ async function getDataFromMensannuaire(mid) {
 			password: conf.web.password
 		});
 		cookies = resp.cookies;
+		log.debug("got cookie " + cookies);
 	}
 
 	// we get member page
