@@ -130,7 +130,8 @@ bot.welcome = async function() {
     if (! newUser) return;
 
     // compose welcome message
-    let msgWelcome = await getMessage(newUser, 'welcome')
+    let msgWelcome = await getMessage(newUser, 'welcome');
+    msgWelcome = msgWelcome
         .replace(/##username##/g, newUser.discord_name)
         .replace(/##botname##/g, client.user.username);
 
@@ -373,7 +374,8 @@ async function sendValidationCode(rowUser, discordUser) {
         }
     });
 
-    const msgWelcome = await getMessage(rowUser, 'email_validation_code')
+    let msgWelcome = await getMessage(rowUser, 'email_validation_code');
+    msgWelcome = msgWelcome
         .replace(/##real_name##/g,      rowUser.real_name)
         .replace(/##validationCode##/g, rowUser.validation_code)
         .replace(/##botAdminName##/g,   conf.botAdmin.name)
