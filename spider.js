@@ -25,13 +25,19 @@ async function getDataFromMensannuaire(mid) {
 			password: conf.web.password
 		});
 		cookies = resp.cookies;
-		log.debug("got cookie " + cookies);
+		log.debug("got cookie " + cookies.lemonldap);
 	}
 
 	// we get member page
 	resp = await needle("get", conf.web.url + 'id=' + mid, {cookies});
-	$ = cheerio.load(resp.body);
-	let name   = $('#identite span:nth-child(2)').text();
+	let html = resp.body.slice(resp.body.indexOf('<body'));
+    $ = cheerio.load(html);
+    let name = $('#identite span:nth-child(2)').text();
+    if (! name) {                           
+        let message = $('#fiche-perso').text().trim();
+		cookies = null;
+        throw `Error getting info for ${mid}: ${message}`;
+    }       
 	let region = $('#identite').text().split("\n")[2].trim().split('-').slice(-1)[0].trim();
 	let email  = $('#contacts div.email a').text();
 
@@ -42,7 +48,7 @@ async function getDataFromMensannuaire(mid) {
 
 	// we check if still a member
 	let adherent = false;
-	const query = `recherche=(nom:FFF${name.split(' ').slice(-1)[0]})(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
+	const query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
 	resp = await needle("get", conf.web.url + query, {cookies});
 	$ = cheerio.load(resp.body);
 	$('#resultats tbody tr').each((i, el) => {
@@ -112,7 +118,7 @@ findNewMensans = async function() {
 		try {
 			found = await getDataFromMensannuaire(drWho.mid);
 		} catch (err) {
-			console.error("Failed visiting page of mensan member " + drWho.mid);
+			log.error("Failed visiting page of mensan member " + drWho.mid);
 			console.error(err);
 			continue;
 		}

@@ -7,3 +7,4 @@ dumps/*.sql
 logs
 *.log
 
+test_*
