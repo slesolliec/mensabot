@@ -4,6 +4,7 @@ const db  = require('./mods/db');
 const log = require('./mods/log');
 const needle  = require('needle');
 const cheerio = require('cheerio');
+const conf    = require('./configs');
 
 
 let cookies;
