@@ -1,6 +1,13 @@
 <template>
 	<header>
-		<button id="loginbtn" @click="login"><i class="fab fa-discord"></i> Login with Discord</button>
+		<div id="me">
+			<button v-if=" ! $auth.loggedIn" id="loginbtn" @click="login"><i class="fab fa-discord"></i> Login with Discord</button>
+			<div v-else id="avatar">
+				<img width="48" height="48" :src="'https://cdn.discordapp.com/avatars/' + $auth.user.id + '/' + $auth.user.avatar + '.png'"><br>
+				{{ $auth.user.username }}<span style="opacity:0.5">#{{ $auth.user.discriminator }}</span><br>
+				<a @click="logout">Déconnexion</a>
+			</div>
+		</div>
 
 		<h1>
 			Blink.ooo<br>
@@ -10,6 +17,7 @@
 		<nav>
 			<NuxtLink to="/users">Utilisateurs</NuxtLink>
 			<NuxtLink to="/receive">Serveurs</NuxtLink>
+			<NuxtLink to="/region">Régions</NuxtLink>
 			<NuxtLink to="/map">Carte</NuxtLink>
 		</nav>
 
@@ -23,7 +31,11 @@ export default {
         login() {
             this.$auth.loginWith('discord', { params: { response_type: 'token' } })
         },
-    }
+		
+		async logout() {
+ 			await this.$auth.logout()
+		}
+     }
 }
 </script>
 
@@ -49,11 +61,40 @@ header {
 	box-shadow: inset 1px 1px 6px black;
 }
 
+#me {
+	position: absolute;
+	top: -10px;
+	right: -10px;
+}
+
+
+#avatar {
+	font-size: 12px;
+	padding: 4px;
+	box-shadow: 1px 1px 6px black;
+	text-align: center;
+	background: #8090dc;
+}
+
+
+#avatar img {
+	border-radius: 24px;
+}
+
+#avatar a {
+	display: inline-block;
+	padding-top: 4px;
+	cursor: pointer;
+}
+#avatar a:hover {
+	text-decoration: underline;
+}
+
 header h1 {
     font-size: 20px;
     font-weight: normal;
 	margin-bottom: 0;
-	padding-bottom: 20px;
+	padding-bottom: 40px;
 	line-height: 14px;
 }
 header h1 em {
@@ -72,8 +113,6 @@ header div span {
 }
 
 #loginbtn {
-	float: right;
-	margin-right: 8px;
 	padding-bottom: 4px;
 	background: #8090dc;
 	color: white;
@@ -81,6 +120,7 @@ header div span {
 	border-radius: 4px;
 	box-shadow: 1px 1px 5px black;
 	cursor: pointer;
+	font-size: 14px;
 }
 
 #loginbtn i {
@@ -90,18 +130,14 @@ header div span {
 }
 
 nav {
-	text-align: right;
 }
 
 nav a {
 	margin: 0 16px;
 	text-decoration: none;
-	color: #DDDDDD;
+	color: white;
 }
 
-nav a:visited {
-	color: #CCCCCC;
-}
 
 nav a:hover,
 nav a.router-link-active {
