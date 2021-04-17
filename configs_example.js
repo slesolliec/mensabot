@@ -22,6 +22,10 @@ const configs = {
 		password: "",
 		headless: true,
 		url: 'https://mensa-france.net/membres/annuaire/?id='
+	},
+	discord: {
+		clientId: 'PUT_BOT_CLIENT_ID',
+		clientSecret: 'PUT_BOT_CLIENT_SECRET'
 	}
 }
 
