@@ -31,6 +31,11 @@ export default {
 		'@nuxtjs/axios',
 		'@nuxtjs/auth-next'
 	],
+
+	serverMiddleware: [
+		'~/api/index.js'
+	],
+
 	auth: {
 		strategies: {
 		  discord: {
@@ -40,8 +45,8 @@ export default {
 		  },
 		},
 		redirect: {
-		  home: '/',
-		  logout: '/logout',
+		  home:     '/',
+		  logout:   '/logout',
 		  callback: '/callback'
 		}
 	  },
