@@ -5,20 +5,19 @@
 			<div v-else id="avatar">
 				<img width="48" height="48" :src="'https://cdn.discordapp.com/avatars/' + $auth.user.id + '/' + $auth.user.avatar + '.png'"><br>
 				{{ $auth.user.username }}<span style="opacity:0.5">#{{ $auth.user.discriminator }}</span><br>
-				<a @click="logout">Déconnexion</a>
+				<a href="/logout" style="margin-right:0;" @click="logout">Déconnexion</a>
 			</div>
 		</div>
 
 		<h1>
-			Blink.ooo<br>
+			<NuxtLink to="/">Blink.ooo</NuxtLink><br>
 			<em>version 0.1.0 beta</em>
 		</h1>
 
 		<nav>
-			<NuxtLink to="/users">Utilisateurs</NuxtLink>
-			<NuxtLink to="/receive">Serveurs</NuxtLink>
+			<NuxtLink to="/">Accueil</NuxtLink>
+			<NuxtLink to="/user">Utilisateurs</NuxtLink>
 			<NuxtLink to="/region">Régions</NuxtLink>
-			<NuxtLink to="/map">Carte</NuxtLink>
 		</nav>
 
 	</header>
@@ -103,6 +102,23 @@ header h1 em {
 	opacity: .6;
 }
 
+header a {
+	margin: 0 16px 0 0 ;
+	padding: 4px;
+	text-decoration: none;
+	color: white;
+}
+
+header a:hover {
+	text-decoration: underline;
+}
+
+header nav a.nuxt-link-exact-active {
+	color: black;
+	background: #EEEEEE;
+	box-shadow: 2px -3px 2px #666666 ;
+}
+
 
 header div {
 	font-size: 14px;
@@ -113,6 +129,8 @@ header div span {
 }
 
 #loginbtn {
+	position: relative;
+	top: 22px; right: 22px;
 	padding-bottom: 4px;
 	background: #8090dc;
 	color: white;
@@ -132,17 +150,5 @@ header div span {
 nav {
 }
 
-nav a {
-	margin: 0 16px;
-	text-decoration: none;
-	color: white;
-}
-
-
-nav a:hover,
-nav a.router-link-active {
-	color: white;
-	text-decoration: underline;
-}
 
 </style>
