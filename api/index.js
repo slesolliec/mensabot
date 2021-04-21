@@ -1,9 +1,9 @@
 // API module based on:
-// https://dev.to/prisma/adding-an-api-and-database-to-your-nuxt-app-with-prisma-2nlp
 
 import express from 'express'
-import { auth0 } from '@nuxtjs/auth-next';
+// import { auth0 } from '@nuxtjs/auth-next';
 const cookieParser = require("cookie-parser");
+const axios = require("axios");
 const db = require('../mods/db');
 
 
@@ -12,7 +12,7 @@ const app = express()
 app.use(cookieParser());
 app.use(express.json())
 
-function checkAccess(req, res, next) {
+async function checkAccess(req, res, next) {
 	console.log(req.cookies);
 	if (req.cookies['auth.strategy'] != 'discord') {
 		return res.sendStatus(401);
@@ -20,11 +20,54 @@ function checkAccess(req, res, next) {
 	if (! req.cookies['auth._token.discord']) {
 		return res.sendStatus(401);
 	}
-	// 
-//	console.log(req.cookies['auth._token_expiration.discord']);
-	next();
+
+	const discordToken = req.cookies['auth._token.discord'].split(' ')[1];
+
+	// do we already know that token?
+	let user = await db.query("select * from users where discord_token = ? and state='validated' limit 1", [discordToken]);
+	if (user[0]) {
+		user = user[0];
+		if (user.discord_token_expiration > Date.now()) {
+			// discord token is still valid
+			return next();
+		} else {
+			// discord token has expired
+			await db.query("update users set discord_token = null, discord_token_expiration = null where did = ?", [user.did])
+		}
+	}
+
+	// we check this is a good token
+	let me = await axios.get('https://discord.com/api/users/@me', {
+		headers: {
+			authorization: req.cookies['auth._token.discord']
+		}
+	});
+	// console.log("me=", me.data);
+	me = me.data;
+	if (! me.id) {
+		// this token is probably crap
+		console.log("Surely crap token");
+		return res.sendStatus(401);
+	}
+	// we get user in db
+	user = await db.query("select * from users where did = ? and state='validated' limit 1", [me.id]);
+	if (user[0]) {
+		// we know that user, he is authenticated correctly
+		// we write the token in db, so we don't need to ping Discord.com next time he makes
+		// a request to the API
+		db.query("update users set discord_token = ?, discord_token_expiration = ? where did = ?", [
+			discordToken,
+			req.cookies['auth._token_expiration.discord'],
+			me.id
+		]);
+		return next();
+	} else {
+		// we don't know that user, or it is not validated
+		return res.sendStatus(401);
+	}
+
 }
-// app.use(checkAccess)
+app.use(checkAccess)
 
 
 
