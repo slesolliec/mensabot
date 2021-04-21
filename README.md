@@ -65,6 +65,5 @@ The headless chrome that comes with Puppetter via npm does not work on RaspBerry
 ### some more links
 
 1. [how to check a message sender has admin privileges in a guild](https://stackoverflow.com/questions/56926998/how-can-i-check-if-the-message-author-has-an-admin-role-using-discord-js)
-
-
+1. [Adding an API and database to Nuxt with Prisma](https://dev.to/prisma/adding-an-api-and-database-to-your-nuxt-app-with-prisma-2nlp)
 
