@@ -15,8 +15,9 @@
 <style>
 
 html {
-	  background: #DDDDDD;
+	  background: #eeeeee;
 }
+
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,6 +34,20 @@ body {
   box-sizing: border-box;
   margin: 0;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 10px;
+}
+
+p {
+  margin-bottom: 10px;
+}
+
+h1 {  font-size: 24px; }
+h2 {  font-size: 18px; }
+h3 {  font-size: 16px; }
+h4 {  font-size: 14px; }
+
 
 
 main {

@@ -42,12 +42,6 @@ export default {
 
 <style>
 
-html {
-	background: #eeeeee;
-}
-
-
-
 header {
 	width: 760px;
 	margin-top: 16px;
