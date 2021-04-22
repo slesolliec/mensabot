@@ -13,7 +13,7 @@
 			</thead>
 			<tbody>
 				<tr v-for="row in rows" :key="row.mid">
-					<td>{{ row.region }}</td>
+					<td><NuxtLink :to="'/region/' + row.region">{{ row.region }}</NuxtLink></td>
 					<td style="text-align:right;">{{ row.nb }}</td>
 				</tr>
 			</tbody>

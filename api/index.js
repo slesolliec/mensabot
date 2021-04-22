@@ -4,6 +4,10 @@ import express from 'express'
 // import { auth0 } from '@nuxtjs/auth-next';
 const cookieParser = require("cookie-parser");
 const axios = require("axios");
+// http://expressjs.com/en/resources/middleware/multer.html
+const multer  = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
 const db = require('../mods/db');
 
 
@@ -12,27 +16,30 @@ const app = express()
 app.use(cookieParser());
 app.use(express.json())
 
+let user = {};
+
 async function checkAccess(req, res, next) {
-	console.log(req.cookies);
+	// console.log(req.cookies);
 	if (req.cookies['auth.strategy'] != 'discord') {
-		return res.sendStatus(401);
+		return res.sendStatus(401).send("You don't have the right cookie");
 	}
 	if (! req.cookies['auth._token.discord']) {
-		return res.sendStatus(401);
+		return res.sendStatus(401).send("You don't have the left cookie");
 	}
 
 	const discordToken = req.cookies['auth._token.discord'].split(' ')[1];
 
 	// do we already know that token?
-	let user = await db.query("select * from users where discord_token = ? and state='validated' limit 1", [discordToken]);
-	if (user[0]) {
-		user = user[0];
+	let users = await db.query("select * from users where discord_token = ? and state='validated' limit 1", [discordToken]);
+	if (users[0]) {
+		user = users[0];
 		if (user.discord_token_expiration > Date.now()) {
 			// discord token is still valid
 			return next();
 		} else {
 			// discord token has expired
 			await db.query("update users set discord_token = null, discord_token_expiration = null where did = ?", [user.did])
+			user = {};
 		}
 	}
 
@@ -47,11 +54,11 @@ async function checkAccess(req, res, next) {
 	if (! me.id) {
 		// this token is probably crap
 		console.log("Surely crap token");
-		return res.sendStatus(401);
+		return res.sendStatus(401).send("Your token seems crap");
 	}
 	// we get user in db
-	user = await db.query("select * from users where did = ? and state='validated' limit 1", [me.id]);
-	if (user[0]) {
+	users = await db.query("select * from users where did = ? and state='validated' limit 1", [me.id]);
+	if (users[0]) {
 		// we know that user, he is authenticated correctly
 		// we write the token in db, so we don't need to ping Discord.com next time he makes
 		// a request to the API
@@ -60,34 +67,45 @@ async function checkAccess(req, res, next) {
 			req.cookies['auth._token_expiration.discord'],
 			me.id
 		]);
+		user = users[0];
 		return next();
 	} else {
 		// we don't know that user, or it is not validated
-		return res.sendStatus(401);
+		return res.sendStatus(401).send("Unknown or un-validated user");
 	}
 
 }
 app.use(checkAccess)
 
 
+app.get('/user', async (req, res) => {
+	let sql = `
+		select did, mid, real_name, region
+		from users
+		where state = "validated"`;
 
+	// get only one user?
+	if (req.query.mid) {
+		const mid = parseInt(req.query.mid);
+		sql += ' and mid = ' + mid;
+		sql = sql.replace('select ', 'select presentation, ');
+	}
 
-app.get('/users', async (req, res) => {
-	const users = await db.query('select real_name, mid, region from users where state = "validated" order by real_name');
+	// get users from a specific region?
+	if (req.query.region) {
+		const region = req.query.region.slice(0, 3);
+		sql += ` and region = '${region}'`;
+	}
+
+	sql += ' order by real_name';
+
+	const users = await db.query(sql);
+
 	const responseData = {};
-	responseData.users = users;
+	responseData.rows = users;
 	res.json(responseData);
 })
 
-app.get('/user', async (req, res) => {
-	const mid = parseInt(req.query.mid);
-	const row = await db.query('select * from users where state = "validated" and mid = ' + mid);
-	if (row) {
-		const responseData = {};
-		responseData.row = row[0];
-		res.json(responseData);
-	}
-})
 
 app.get('/region', async (req, res) => {
 	const rows = await db.query('select region, count(*) as nb from users where state = "validated" group by region order by region');
@@ -96,12 +114,15 @@ app.get('/region', async (req, res) => {
 	res.json(responseData);
 })
 
-
-
+app.post('/me', upload.none(), async (req, res) => {
+	const update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
+	res.json({result: "well done"});
+})
 
 
 // in case of problem with BigInt
 // (_, v) => typeof v === 'bigint' ? v.toString() : v
+
 
 /*
 app.get('/user/did/:did', async (req, res) => {

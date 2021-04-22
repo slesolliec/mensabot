@@ -10,8 +10,8 @@
 		</div>
 
 		<h1>
-			<NuxtLink to="/">Blink.ooo</NuxtLink><br>
-			<em>version 0.1.0 beta</em>
+			<NuxtLink to="/">Mensa.cafe</NuxtLink><br>
+			<em>&nbsp;&nbsp;version 0.1.0 alpha</em>
 		</h1>
 
 		<nav>

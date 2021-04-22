@@ -35,8 +35,8 @@ export default {
 	methods: {
 		
 		getRows: async function () {
-			let {data} = await this.$axios.get('http://localhost:3000/api/users');
-			this.rows = data.users;
+			let {data} = await this.$axios.get('http://localhost:3000/api/user');
+			this.rows = data.rows;
 		}
 	},
 

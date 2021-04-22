@@ -4,7 +4,7 @@ const conf = require('./configs');
 export default {
 
     head: {
-        title: 'Brain Link',
+        title: 'Mensa Café',
         htmlAttrs: {
             lang: 'fr'
         },
@@ -29,7 +29,8 @@ export default {
 
 	modules: [
 		'@nuxtjs/axios',
-		'@nuxtjs/auth-next'
+		'@nuxtjs/auth-next',
+		'@nuxtjs/markdownit'
 	],
 
 	serverMiddleware: [
@@ -51,7 +52,10 @@ export default {
 		}
 	  },
 
-	
+	markdownit: {
+		runtime: true // Support `$md()`
+	},
+
 	router: {
 		middleware: ['auth']
 	}
