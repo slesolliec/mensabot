@@ -1,11 +1,14 @@
 <template>
 	<div>
 
+		<h1>Membres</h1>
+
 		<client-only>
 
 		<table class="list">
 			<thead>
 				<tr>
+					<th><abbr title="A rédigé une présentation">P.</abbr></th>
 					<th>Nom</th>
 					<th>Discord</th>
 					<th>Région</th>
@@ -13,9 +16,10 @@
 			</thead>
 			<tbody>
 				<tr v-for="row in rows" :key="row.mid">
+					<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 					<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 					<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
-					<td><nuxt-link :to="'/region/' + row.region">{{ row.region }}</nuxt-link></td>
+					<td style="text-align:center;"><nuxt-link :to="'/region/' + row.region">{{ row.region }}</nuxt-link></td>
 				</tr>
 			</tbody>
 		</table>

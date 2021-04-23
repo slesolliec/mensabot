@@ -80,7 +80,9 @@ app.use(checkAccess)
 
 app.get('/user', async (req, res) => {
 	let sql = `
-		select did, mid, real_name, region, discord_name, discord_discriminator, discord_avatar
+		select mid, real_name, region,
+			did, discord_name, discord_discriminator, discord_avatar,
+			length(presentation) as presentationLength
 		from users
 		where state = "validated"`;
 

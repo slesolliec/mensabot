@@ -8,12 +8,14 @@
 			<table class="list">
 				<thead>
 					<tr>
+						<th><abbr title="A rédigé une présentation">P.</abbr></th>
 						<th>Nom</th>
 						<th>Discord</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr v-for="row in rows" :key="row.mid">
+						<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 						<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 						<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
 					</tr>
