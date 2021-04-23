@@ -41,7 +41,7 @@ async function with_needle(mid) {
 	let adherent = false;
 	const query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
 	resp = await needle("get", conf.web.url + query, {cookies});
-	let html = resp.body.slice(resp.body.indexOf('<body'));
+	html = resp.body.slice(resp.body.indexOf('<body'));
 	$ = cheerio.load(html);
 	$('#resultats tbody tr').each((i, el) => {
 		if ($(el).find('td:nth-child(1)').text() == mid) {
