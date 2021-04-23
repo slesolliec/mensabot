@@ -49,7 +49,8 @@ export default {
 		  home:     '/',
 		  logout:   '/logout',
 		  callback: '/callback'
-		}
+		},
+		redirectUri: 'http://localhost:3000/callback'
 	  },
 
 	markdownit: {
