@@ -49,7 +49,7 @@ export default {
 			let {data} = await this.$axios.get('/api/user?mid=' + mid);
 			if (data.rows.length) {
 				this.row = data.rows[0];
-				document.title += ' / ' + this.row.real_name;
+				document.title = document.title.split('/')[0] + " / " + this.row.real_name;
 			}
 		},
 

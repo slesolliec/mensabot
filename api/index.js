@@ -80,7 +80,7 @@ app.use(checkAccess)
 
 app.get('/user', async (req, res) => {
 	let sql = `
-		select did, mid, real_name, region
+		select did, mid, real_name, region, discord_name, discord_discriminator, discord_avatar
 		from users
 		where state = "validated"`;
 
@@ -88,7 +88,7 @@ app.get('/user', async (req, res) => {
 	if (req.query.mid) {
 		const mid = parseInt(req.query.mid);
 		sql += ' and mid = ' + mid;
-		sql = sql.replace('select ', 'select discord_name, discord_discriminator, discord_avatar, presentation, ');
+		sql = sql.replace('select ', 'select presentation, ');
 	}
 
 	// get users from a specific region?

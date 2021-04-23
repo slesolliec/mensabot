@@ -1,10 +1,10 @@
 <template>
 	<div>
-		Liste des régions.
+		<h1>Liste des régions.</h1>
 
 		<client-only>
 
-		<table>
+		<table class="list">
 			<thead>
 				<tr>
 					<th>Région</th>
@@ -43,8 +43,8 @@ export default {
 
 	async fetch() {
 		this.getRows();
+		document.title = document.title.split('/')[0] + " / Régions";
 	}
-
 
 }
 </script>

@@ -62,6 +62,19 @@ input::placeholder {
     color: #AAA;
 }
 
+table.list th, table.list td {
+  padding: 4px;
+}
+
+table.list th {
+  background: #CCC;
+  text-align: left;
+}
+
+table.list tbody tr:nth-child(odd) {
+  background: #FFF;
+}
+
 
 /* for mobiles (small screens) */
 @media screen and (max-width: 480px) {}
