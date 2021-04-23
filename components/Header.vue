@@ -18,6 +18,7 @@
 			<NuxtLink to="/">Accueil</NuxtLink>
 			<NuxtLink to="/user">Utilisateurs</NuxtLink>
 			<NuxtLink to="/region">Régions</NuxtLink>
+			<NuxtLink to="/user/trombinoscope">Trombinoscope</NuxtLink>
 		</nav>
 
 	</header>
