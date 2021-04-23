@@ -36,7 +36,7 @@ export default {
 	methods: {
 		
 		getRows: async function () {
-			let {data} = await this.$axios.get('http://localhost:3000/api/region');
+			let {data} = await this.$axios.get('https:/mensa.cafe/api/region');
 			this.rows = data.rows;
 		}
 	},
@@ -47,14 +47,6 @@ export default {
 
 
 }
-
-/*
-	async fetch() {
-		this.users = await fetch(
-			'http://localhost:3000/api/user'
-		).then(res => res.json())
-	}
-*/
 </script>
 
 

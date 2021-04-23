@@ -3,9 +3,15 @@
 
 		<client-only>
 
+			<div class="avatar">
+				<img v-if="row.discord_avatar" width="128" height="128" :src="'https://cdn.discordapp.com/avatars/' + row.did + '/' + row.discord_avatar + '.png'"><br>
+				{{ row.discord_name }}<span style="opacity:0.5">#{{ row.discord_discriminator }}</span>
+			</div>
+
+
 			<h2>{{ row.real_name }}</h2>
 
-			<p>Région: {{ row.region }}</p>
+			<p>Région: <NuxtLink :to="'/region/' + row.region">{{ row.region }}</NuxtLink></p>
 
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
@@ -15,7 +21,7 @@
 
 				</p>
 				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea>
-				<br><button type="submit">Enregistrer</button>
+				<br><button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
 			</form>
 
 
@@ -40,7 +46,7 @@ export default {
 		
 		getRow: async function () {
 			const mid = parseInt(this.$route.params.id);
-			let {data} = await this.$axios.get('http://localhost:3000/api/user?mid=' + mid);
+			let {data} = await this.$axios.get('https:/mensa.cafe/api/user?mid=' + mid);
 			if (data.rows.length) {
 				this.row = data.rows[0];
 				document.title += ' / ' + this.row.real_name;
@@ -50,7 +56,7 @@ export default {
 		present: async function() {
 			const bodyFormData = new FormData();
 			bodyFormData.append('presentation', this.row.presentation);
-			let {data} = await this.$axios.post('http://localhost:3000/api/me', bodyFormData);
+			let {data} = await this.$axios.post('https:/mensa.cafe/api/me', bodyFormData);
 			console.log(data);
 		}
 	},
@@ -61,3 +67,23 @@ export default {
 }
 
 </script>
+
+
+<style>
+
+div.avatar {
+	color: white;
+	float: right;
+	font-size: 12px;
+	padding: 8px;
+	box-shadow: inset 1px 1px 6px black;
+	text-align: center;
+	background: #8090dc;
+}
+
+
+div.avatar img {
+	border-radius: 64px;
+}
+
+</style>

@@ -39,7 +39,7 @@ export default {
 		
 		getRows: async function () {
 			this.region = this.$route.params.region.slice(0, 3);
-			let {data} = await this.$axios.get('http://localhost:3000/api/user?region=' + this.region);
+			let {data} = await this.$axios.get('https:/mensa.cafe/api/user?region=' + this.region);
 			this.rows = data.rows;
 		}
 	},

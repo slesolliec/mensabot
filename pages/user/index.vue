@@ -13,7 +13,7 @@
 			<tbody>
 				<tr v-for="row in rows" :key="row.mid">
 					<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
-					<td>{{ row.region }}</td>
+					<td><nuxt-link :to="'/region/' + row.region">{{ row.region }}</nuxt-link></td>
 				</tr>
 			</tbody>
 		</table>
@@ -35,7 +35,7 @@ export default {
 	methods: {
 		
 		getRows: async function () {
-			let {data} = await this.$axios.get('http://localhost:3000/api/user');
+			let {data} = await this.$axios.get('https:/mensa.cafe/api/user');
 			this.rows = data.rows;
 		}
 	},
@@ -47,11 +47,4 @@ export default {
 
 }
 
-/*
-	async fetch() {
-		this.users = await fetch(
-			'http://localhost:3000/api/user'
-		).then(res => res.json())
-	}
-*/
 </script>
