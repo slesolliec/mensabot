@@ -59,8 +59,19 @@ async function reMember(member) {
     let theUser = await db.getUser(member.user.id);
     if (! theUser) {
         // member is not here
-        await db.query("insert into users(did, discord_name) values(?, ?)", [member.user.id, member.user.username]);
+        await db.query("insert into users(did, discord_name, discord_discriminator, discord_avatar) values(?, ?)", [
+            member.user.id,
+            member.user.username,
+            member.user.discriminator,
+            member.user.avatar
+        ]);
         // theUser = await db.getUser(member.user.id);
+    } else {
+        // we update the avatar
+        await db.query("update users set discord_avatar = ? where did = ?", [
+            member.user.avatar,
+            member.user.id
+        ]);
     }
 
     // check we know the guild
