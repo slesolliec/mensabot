@@ -84,16 +84,18 @@ header {
 }
 
 header h1 {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: normal;
 	margin-bottom: 0;
 	padding-bottom: 40px;
 	line-height: 14px;
+	text-shadow: 1px 1px 1px black;
 }
 header h1 em {
 	font-size: 10px;
 	font-style: normal;
 	opacity: .6;
+	text-shadow: none;
 }
 
 header a {
