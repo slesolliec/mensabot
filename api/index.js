@@ -88,7 +88,7 @@ app.get('/user', async (req, res) => {
 	if (req.query.mid) {
 		const mid = parseInt(req.query.mid);
 		sql += ' and mid = ' + mid;
-		sql = sql.replace('select ', 'select presentation, ');
+		sql = sql.replace('select ', 'select discord_name, discord_discriminator, discord_avatar, presentation, ');
 	}
 
 	// get users from a specific region?
