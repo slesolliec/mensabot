@@ -46,7 +46,7 @@ export default {
 		
 		getRow: async function () {
 			const mid = parseInt(this.$route.params.id);
-			let {data} = await this.$axios.get('https:/mensa.cafe/api/user?mid=' + mid);
+			let {data} = await this.$axios.get('/api/user?mid=' + mid);
 			if (data.rows.length) {
 				this.row = data.rows[0];
 				document.title += ' / ' + this.row.real_name;
@@ -56,7 +56,7 @@ export default {
 		present: async function() {
 			const bodyFormData = new FormData();
 			bodyFormData.append('presentation', this.row.presentation);
-			let {data} = await this.$axios.post('https:/mensa.cafe/api/me', bodyFormData);
+			let {data} = await this.$axios.post('/api/me', bodyFormData);
 			console.log(data);
 		}
 	},

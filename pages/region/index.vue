@@ -36,7 +36,7 @@ export default {
 	methods: {
 		
 		getRows: async function () {
-			let {data} = await this.$axios.get('https:/mensa.cafe/api/region');
+			let {data} = await this.$axios.get('/api/region');
 			this.rows = data.rows;
 		}
 	},
