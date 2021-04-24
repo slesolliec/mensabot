@@ -7,6 +7,7 @@ const axios = require("axios");
 // http://expressjs.com/en/resources/middleware/multer.html
 const multer  = require('multer');
 const upload = multer({ dest: 'uploads/' });
+const basicAuth = require('basic-auth');
 
 const db = require('../mods/db');
 
@@ -19,6 +20,35 @@ app.use(express.json())
 let user = {};
 
 async function checkAccess(req, res, next) {
+
+	// this page is open to anyone
+	if (req.url == '/status') {
+		return next();
+	}
+
+	// basic-auth for Spider
+	if (req.url == '/spider') {
+		let spider = basicAuth(req);
+		if (!spider || !spider.name || !spider.pass) {
+			res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+			res.sendStatus(401).send("Please send credentials for spider");
+			return;
+		}
+		if (spider.name != 'spider') {
+			res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+			res.sendStatus(401).send("Wrong login for spider");
+			return;
+		}
+		let spiderpass = await db.query("select val from store where `key` = 'spider_password'");
+		spiderpass = spiderpass[0].val;
+		if (spider.pass != spiderpass) {
+			res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+			res.sendStatus(401).send("Wrong password for spider");
+			return;
+		}
+		return next();
+	}
+
 	// console.log(req.cookies);
 	if (req.cookies['auth.strategy'] != 'discord') {
 		return res.sendStatus(401).send("You don't have the right cookie");
@@ -157,7 +187,49 @@ app.get('/status', async (req, res) => {
 	res.json({status});
 })
 
+app.get('/spider', async (req, res) => {
+	const getnoobs = await db.query("select mid from users where state='welcomed' and mid is not null");
+	let noobs = [];
 
+	if (getnoobs.length == 0) {
+		db.query("update store set val = ? where `key` = 'spider_lastping'", [Date.now()]);
+	}
+
+	while (getnoobs.length) {
+		let noob = getnoobs.pop();
+		noobs.push({
+			mid: noob.mid
+		});
+	}
+	res.json({noobs});
+});
+
+// we get the adherent's data from external spider
+app.post('/spider', async (req, res) => {
+
+	// console.log(req.body);
+	let noob = req.body;
+
+	if (noob.region) {
+		db.query(`
+			update users
+			set real_name = ?,
+				region    = ?,
+				email     = ?,
+				adherent  = ?,
+				state='found'
+			where mid = ? and state = 'welcomed'`, [
+				noob.name,
+				noob.region,
+				noob.email,
+				noob.adherent,
+				noob.mid]);
+	} else {
+		db.query("update users state='err_not_found' where mid = ? and state = 'welcomed'", [noob.mid]);
+	}
+	db.query("update store set val = ? where `key` = 'spider_lastping'", [Date.now()]);
+	return res.send("OK thanks");
+});
 
 // in case of problem with BigInt
 // (_, v) => typeof v === 'bigint' ? v.toString() : v

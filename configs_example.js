@@ -26,6 +26,10 @@ const configs = {
 	discord: {
 		clientId: 'PUT_BOT_CLIENT_ID',
 		clientSecret: 'PUT_BOT_CLIENT_SECRET'
+	},
+	spider: {
+		password: '',
+		url: 'https://mensa.cafe'
 	}
 }
 
