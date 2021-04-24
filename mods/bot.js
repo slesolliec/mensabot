@@ -127,6 +127,8 @@ bot.welcome = async function() {
 
     if (bot.isMaintenance) return;
 
+    db.query("update store set val = ? where `key` = 'bot_lastping'", [Date.now()]);
+
     // we look for a new user that belongs to a guild that is active (= mensan_role not null)
     const newUser = await db.getOne(`
         select users.did, users.discord_name

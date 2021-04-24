@@ -122,6 +122,43 @@ app.post('/me', upload.none(), async (req, res) => {
 })
 
 
+app.get('/status', async (req, res) => {
+	const status = {};
+	status.cssclass = 'allok';	// I know it's bad to mix business and display
+ 	// await db.query("update store set val = ? where `key` = 'bot_lastping'", [Date.now()]);
+
+	// spider status
+	let lastping = await db.query("select val from store where `key` = 'spider_lastping'");
+	lastping =  parseInt(lastping[0].val);
+	if (Date.now() - lastping < 60 * 1000) {
+		status.annuaire = "sertice actif";
+	} else {
+		status.annuaire = "service de consultation de l'annuaire Mensa France inactif :-(";
+		status.cssclass = 'spideroff';
+	}
+	const noobs = await db.query(`
+		select count(*) as nb
+		from users
+		where state='welcomed'
+		  and mid is not null
+		order by mid desc`);
+	status.nbnoobs = noobs[0].nb;
+
+	// bot status
+	lastping = await db.query("select val from store where `key` = 'bot_lastping'");
+	lastping =  parseInt(lastping[0].val);
+	if (Date.now() - lastping < 60 * 1000) {
+		status.bot = "en ligne :-)";
+	} else {
+		status.bot = "déconnecté :-(";
+		status.cssclass = 'offline';
+	}
+
+	res.json({status});
+})
+
+
+
 // in case of problem with BigInt
 // (_, v) => typeof v === 'bigint' ? v.toString() : v
 

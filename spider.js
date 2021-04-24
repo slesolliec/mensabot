@@ -111,6 +111,10 @@ findNewMensans = async function() {
 		}
 	}
 
+	if (newUsers.length == 0) {
+		db.query("update store set val = ? where `key` = 'spider_lastping'", [Date.now()]);
+	}
+
 	while (newUsers.length) {
 		const drWho = newUsers.pop();
 		console.log("== WHO ==\n", drWho);
@@ -131,6 +135,7 @@ findNewMensans = async function() {
 					email     = ?,
 					state='found'
 				where mid = ?`, [found.name, found.region, found.email, drWho.mid]);
+			db.query("update store set val = ? where `key` = 'spider_lastping'", [Date.now()]);
 		} else {
 			await db.query("update users state='err_not_found' where mid = ?", [drWho.mid]);
 		}
