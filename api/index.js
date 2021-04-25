@@ -110,7 +110,7 @@ app.use(checkAccess)
 
 app.get('/user', async (req, res) => {
 	let sql = `
-		select mid, real_name, region,
+		select mid, real_name, region, adherent,
 			did, discord_name, discord_discriminator, discord_avatar,
 			length(presentation) as presentationLength
 		from users
@@ -161,7 +161,7 @@ app.get('/status', async (req, res) => {
 	let lastping = await db.query("select val from store where `key` = 'spider_lastping'");
 	lastping =  parseInt(lastping[0].val);
 	if (Date.now() - lastping < 60 * 1000) {
-		status.annuaire = "sertice actif";
+		status.annuaire = "service actif";
 	} else {
 		status.annuaire = "service de consultation de l'annuaire Mensa France inactif :-(";
 		status.cssclass = 'spideroff';

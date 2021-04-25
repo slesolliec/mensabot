@@ -12,6 +12,7 @@
 					<th>Nom</th>
 					<th>Discord</th>
 					<th>Région</th>
+					<th><abbr title="Adhésion à jour">Adh.</abbr></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -20,6 +21,10 @@
 					<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 					<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
 					<td style="text-align:center;"><nuxt-link :to="'/region/' + row.region">{{ row.region }}</nuxt-link></td>
+					<td style="text-align:center">
+						<i v-if="row.adherent == 1" class="fas fa-certificate" style="color: green;"></i>
+						<i v-if="row.adherent == 0" class="fas fa-certificate" style="color: red;"></i>
+					</td>
 				</tr>
 			</tbody>
 		</table>
