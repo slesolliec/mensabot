@@ -1,4 +1,7 @@
 // this looks at the database and fetches info from the annuaire
+// this script is supposed to run on the same server as the MensaBot
+// and Mensa.cafe, but as I have stupid issues on them, I am now using
+// spider2.js
 
 const db  = require('./mods/db');
 const log = require('./mods/log');

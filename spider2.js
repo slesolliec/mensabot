@@ -1,4 +1,7 @@
-// this looks at the database and fetches info from the annuaire
+// does the same as spider.js except that it is not supposed to run on the same
+// server as Mensa.cafe and Mensabot.
+// It calls the Mensa.cafe API instead and sends back the data it got from
+// the Mensa France annuaire.
 
 const log = require('./mods/log');
 const needle  = require('needle');
@@ -111,6 +114,6 @@ findNewMensans = async function() {
 
 // fillEmptyNames();
 
-// setInterval(findNewMensans, 60 * 1000);
+setInterval(findNewMensans, 60 * 1000);
 
 findNewMensans();
