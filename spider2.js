@@ -37,17 +37,93 @@ async function checkIsMember(mid, name, region, email) {
 
 	await getCookies();
 
-	let adherent = false;
-	const query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
-	resp = await needle("get", conf.web.url + query, {cookies});
+	let adherent = null;
+
+	// search via email
+	let query = `recherche=(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
+	console.log(query);
+	let resp = await needle("get", conf.web.url + query, {cookies});
 	$ = cheerio.load(resp.body);
 	$('#resultats tbody tr').each((i, el) => {
-		if ($(el).find('td:nth-child(1)').text() == mid) {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
 			adherent = true;
 		}
 	});
+	if (adherent) { return true; }
 
-	return adherent;
+	// search via name
+	query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(cotisation:oui)`;
+	console.log(query);
+	resp = await needle("get", conf.web.url + query, {cookies});
+	$ = cheerio.load(resp.body);
+	$('#resultats tbody tr').each((i, el) => {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
+			adherent = true;
+		}
+	});
+	if (adherent) { return true; }
+
+	// search via email
+	query = `recherche=(region:${region})(type_contact:mail)(contact:${email})(cotisation:non)`;
+	console.log(query);
+	resp = await needle("get", conf.web.url + query, {cookies});
+	$ = cheerio.load(resp.body);
+	$('#resultats tbody tr').each((i, el) => {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
+			adherent = 'faux';
+		}
+	});
+	if (adherent == 'faux') { return false; }
+
+	// search via name
+	query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(cotisation:non)`;
+	console.log(query);
+	resp = await needle("get", conf.web.url + query, {cookies});
+	$ = cheerio.load(resp.body);
+	$('#resultats tbody tr').each((i, el) => {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
+			adherent = 'faux';
+		}
+	});
+	if (adherent == 'faux') { return false; }
+
+	// search via first name
+	query = `recherche=(prenom:${name.split(' ')[0]})(region:${region})(cotisation:oui)`;
+	console.log(query);
+	resp = await needle("get", conf.web.url + query, {cookies});
+	$ = cheerio.load(resp.body);
+	$('#resultats tbody tr').each((i, el) => {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
+			adherent = true;
+		}
+	});
+	if (adherent) { return true; }
+
+	// search via first name
+	query = `recherche=(prenom:${name.split(' ')[0]})(region:${region})(cotisation:nom)`;
+	console.log(query);
+	resp = await needle("get", conf.web.url + query, {cookies});
+	$ = cheerio.load(resp.body);
+	$('#resultats tbody tr').each((i, el) => {
+		id = parseInt($(el).text().trim().split("\n")[0].trim());
+		console.log('id=', id);
+		if (id == mid) {
+			adherent = "faux";
+		}
+	});
+	if (adherent == "faux") { return false; }
+
+	return '2';
 }
 
 
