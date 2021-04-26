@@ -13,6 +13,8 @@
 
 			<p>Région: <NuxtLink :to="'/region/' + row.region">{{ row.region }}</NuxtLink></p>
 
+			<p><a :href="'https://mensa-france.net/membres/annuaire/?id=' + row.mid">Fiche dans l'annuaire Mensa France</a></p>
+
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
 			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
