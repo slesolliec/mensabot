@@ -129,6 +129,19 @@ app.get('/user', async (req, res) => {
 		sql += ` and region = '${region}'`;
 	}
 
+	// get users from a specific guild?
+	if (req.query.guild) {
+		const guild = req.query.guild.split(' ')[0];
+		sql += ` and did in (select did from members where gid = '${guild}')`;
+	}
+
+	// special case: unvalidated users for admins
+	if (req.query.unval == 'idated') {
+		// we check we are guild owner
+		sql = 'select * from users where did="00000"';
+	} 
+
+
 	sql += ' order by real_name';
 
 	const users = await db.query(sql);
@@ -145,6 +158,22 @@ app.get('/region', async (req, res) => {
 	responseData.rows = rows;
 	res.json(responseData);
 })
+
+
+app.get('/guild', async (req, res) => {
+	const rows = await db.query(`
+		select g.gid, g.name, count(*) as nb
+		from guilds as g, members as m, users as u
+		where g.gid = m.gid
+		  and m.did = u.did
+		  and u.state = "validated"
+		group by g.gid
+		order by g.name`);
+	const responseData = {};
+	responseData.rows = rows;
+	res.json(responseData);
+})
+
 
 app.post('/me', upload.none(), async (req, res) => {
 	const update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
