@@ -188,6 +188,7 @@ app.get('/status', async (req, res) => {
 })
 
 app.get('/spider', async (req, res) => {
+	// we get new users
 	const getnoobs = await db.query("select mid from users where state='welcomed' and mid is not null");
 	let noobs = [];
 
@@ -201,7 +202,26 @@ app.get('/spider', async (req, res) => {
 			mid: noob.mid
 		});
 	}
-	res.json({noobs});
+
+	// we get users whose adherent status is null
+	const getUnknowns = await db.query(`
+			select mid, real_name, region, email
+			from users
+			where state='validated'
+			  and adherent is null `);
+	let unknowns = [];
+
+	while (getUnknowns.length) {
+		let unknown = getUnknowns.pop();
+		unknowns.push({
+			mid:       unknown.mid,
+			real_name: unknown.real_name,
+			region:    unknown.region,
+			email:     unknown.email
+		});
+	}
+
+	res.json({noobs, unknowns});
 });
 
 // we get the adherent's data from external spider
@@ -209,6 +229,8 @@ app.post('/spider', async (req, res) => {
 
 	// console.log(req.body);
 	let noob = req.body;
+
+	console.log("noob=", noob);
 
 	if (noob.region) {
 		db.query(`
@@ -225,7 +247,11 @@ app.post('/spider', async (req, res) => {
 				noob.adherent,
 				noob.mid]);
 	} else {
-		db.query("update users state='err_not_found' where mid = ? and state = 'welcomed'", [noob.mid]);
+		if (noob.adherent != undefined) {
+			db.query(`update users set adherent = ? where mid = ?`, [noob.adherent, noob.mid]);
+		} else {
+			db.query("update users set state='err_not_found' where mid = ? and state = 'welcomed'", [noob.mid]);
+		}
 	}
 	db.query("update store set val = ? where `key` = 'spider_lastping'", [Date.now()]);
 	return res.send("OK thanks");
