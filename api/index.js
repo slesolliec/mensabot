@@ -208,7 +208,7 @@ app.get('/spider', async (req, res) => {
 			select mid, real_name, region, email
 			from users
 			where state='validated'
-			  and adherent is null `);
+			  and (adherent = 2 or adherent is null) `);
 	let unknowns = [];
 
 	while (getUnknowns.length) {
