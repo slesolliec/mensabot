@@ -151,7 +151,7 @@ async function getDataFromMensannuaire(mid) {
 	}
 
 	// we check if still a member
-	const adherent = checkIsMember(mid, name, region, email);
+	const adherent = await checkIsMember(mid, name, region, email);
 
 	return {name, region, email, adherent};
 }
