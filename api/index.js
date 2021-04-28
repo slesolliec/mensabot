@@ -133,17 +133,35 @@ app.get('/user', async (req, res) => {
 	if (req.query.guild) {
 		const guild = req.query.guild.split(' ')[0];
 		sql += ` and did in (select did from members where gid = '${guild}')`;
+
+		// special case: unvalidated users for admins
+		if (req.query.unval == 'idated') {
+			// we check we are guild owner
+			let isOwner = db.query("select * from members where gid = ? and did = ?", [
+				guild, user.did
+			]);
+
+			if (user.did != '396752710487113729') {
+				if (isOwner.length == 0) {
+					res.json({rows: []});
+					return;
+				}
+				
+				if (isOwner[0].state != 'owner') {
+					res.json({rows: []});
+					return;
+				}
+			}
+
+			sql = sql.replace('state = "validated"', 'state <> "validated"');
+		} 
+
 	}
 
-	// special case: unvalidated users for admins
-	if (req.query.unval == 'idated') {
-		// we check we are guild owner
-		sql = 'select * from users where did="00000"';
-	} 
 
+	sql += ' order by real_name, discord_name';
 
-	sql += ' order by real_name';
-
+	console.log(sql);
 	const users = await db.query(sql);
 
 	const responseData = {};
@@ -167,6 +185,7 @@ app.get('/guild', async (req, res) => {
 		where g.gid = m.gid
 		  and m.did = u.did
 		  and u.state = "validated"
+		  and g.is_active = 1
 		group by g.gid
 		order by g.name`);
 	const responseData = {};
