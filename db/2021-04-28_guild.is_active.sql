@@ -1,0 +1,4 @@
+
+ALTER TABLE guilds 
+ADD COLUMN is_active TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER mensan_role;
+

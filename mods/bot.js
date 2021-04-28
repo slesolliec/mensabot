@@ -13,6 +13,9 @@ bot.isMaintenance = false;
 client.once('ready', () => {
     log.debug('Bot is connected to Discord');
 
+    // set all guilds to is_active = 0
+    db.query("update guilds set is_active = 0");
+
     // loop on my guilds
     client.guilds.cache.forEach(processOneGuild);
 });
@@ -31,7 +34,10 @@ async function processOneGuild(guild) {
     // check we know that guild
     const checkGuild = await db.getGuild(guild.id);
     if (! checkGuild)
-        db.query("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
+        await db.query("insert into guilds(gid, name) values(?, ?, 1)", [guild.id, guild.name]);
+
+    db.query("update guilds set is_active = 1 where gid = ?)", [guild.id]);
+
 
     // set owner of guild in members table
     db.query("update members set state='owner' where gid = ? and did = ?", [guild.id, guild.ownerID]);
