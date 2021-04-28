@@ -1,7 +1,7 @@
-import express from 'express'
+const express = require('express');
 
 // set up plain http server
-var http = express();
+const http = express();
 
 // set up a route to redirect http to https
 http.get('*', function(req, res) {  
