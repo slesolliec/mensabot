@@ -36,7 +36,7 @@ async function processOneGuild(guild) {
     if (! checkGuild)
         await db.query("insert into guilds(gid, name) values(?, ?, 1)", [guild.id, guild.name]);
 
-    db.query("update guilds set is_active = 1 where gid = ?)", [guild.id]);
+    db.query("update guilds set is_active = 1 where gid = ?", [guild.id]);
 
 
     // set owner of guild in members table
