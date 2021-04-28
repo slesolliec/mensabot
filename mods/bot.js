@@ -32,6 +32,10 @@ async function processOneGuild(guild) {
     const checkGuild = await db.getGuild(guild.id);
     if (! checkGuild)
         db.query("insert into guilds(gid, name) values(?, ?)", [guild.id, guild.name]);
+
+    // set owner of guild in members table
+    db.query("update members set state='owner' where gid = ? and did = ?", [guild.id, guild.ownerID]);
+    // console.log(guild.ownerID);
     
     // list roles of guild
     guild.roles.cache.map(role => console.log('rôle:', '[', role.guild.name, ']', role.name, 'id:', role.id));
@@ -59,7 +63,7 @@ async function reMember(member) {
     let theUser = await db.getUser(member.user.id);
     if (! theUser) {
         // member is not here
-        await db.query("insert into users(did, discord_name, discord_discriminator, discord_avatar) values(?, ?)", [
+        await db.query("insert into users(did, discord_name, discord_discriminator, discord_avatar) values(?, ?, ?, ?)", [
             member.user.id,
             member.user.username,
             member.user.discriminator,
