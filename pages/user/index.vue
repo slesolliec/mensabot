@@ -52,7 +52,7 @@ export default {
 		}
 	},
 
-	async fetch() {
+	mounted: function() {
 		this.getRows();
 	}
 

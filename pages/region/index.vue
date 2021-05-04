@@ -41,7 +41,7 @@ export default {
 		}
 	},
 
-	async fetch() {
+	mounted: function() {
 		this.getRows();
 		document.title = document.title.split('/')[0] + " / Régions";
 	}
