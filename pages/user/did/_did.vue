@@ -53,7 +53,7 @@ export default {
 	data() {
 		return {
 			row: {},
-			options: []
+			options: ['TDA', 'TDAH', 'TSA']
 		}
 	},
 
