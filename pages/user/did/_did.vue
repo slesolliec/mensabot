@@ -25,12 +25,14 @@
 
 				</p>
 				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea><br>
-				<multiselect v-model="tags" :options="options"
+				<h4>Etiquettes</h4>				
+				<multiselect v-model="row.tags" :options="options"
 					:multiple="true"
 					:close-on-select="false"
 					:clear-on-select="false"
 					:taggable="true"
 					:tag-placeholder="'Ajouter ce nouveau tag'"
+					:placeholder="'Choisir un tag'"
 					@tag="addTag"></multiselect><br>
 				
 				<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
@@ -51,8 +53,7 @@ export default {
 	data() {
 		return {
 			row: {},
-			tags: [],
-			options: ['list', 'of', 'options']
+			options: []
 		}
 	},
 
@@ -70,14 +71,14 @@ export default {
 		present: async function() {
 			const bodyFormData = new FormData();
 			bodyFormData.append('presentation', this.row.presentation);
-			bodyFormData.append('tags', this.tags);
+			bodyFormData.append('tags', this.row.tags);
 			let {data} = await this.$axios.post('/api/me', bodyFormData);
 			console.log(data);
 		},
 
 		addTag (newTag) {
 			this.options.push(newTag);
-			this.tags.push(newTag);
+			this.row.tags.push(newTag);
 		}
 	},
 
@@ -119,5 +120,6 @@ ul.tags li {
 	color: white;
 	border-radius: 5px;
 	margin-right: 10px;
+	margin-bottom: 10px;
 }
 </style>
