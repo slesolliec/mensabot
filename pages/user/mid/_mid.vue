@@ -15,6 +15,8 @@
 
 			<p><a :href="'https://mensa-france.net/membres/annuaire/?id=' + row.mid">Fiche dans l'annuaire Mensa France</a></p>
 
+			<ul class="tags"><li v-for="tag in row.tags" :key="tag">{{tag}}</li></ul>
+
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
 			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
@@ -23,7 +25,15 @@
 
 				</p>
 				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea><br>
-				<multiselect v-model="value" :options="options"></multiselect><br>
+				<h4>Etiquettes</h4>				
+				<multiselect v-model="row.tags" :options="options"
+					:multiple="true"
+					:close-on-select="false"
+					:clear-on-select="false"
+					:taggable="true"
+					:tag-placeholder="'Ajouter ce nouveau tag'"
+					:placeholder="'Choisir un tag'"
+					@tag="addTag"></multiselect><br>
 				
 				<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
 			</form>
@@ -43,15 +53,14 @@ export default {
 	data() {
 		return {
 			row: {},
-			value: null,
-			options: ['list', 'of', 'options']
+			options: ['TDA', 'TDAH', 'TSA']
 		}
 	},
 
 	methods: {
 		
 		getRow: async function () {
-			const mid = parseInt(this.$route.params.mid);
+			const mid = this.$route.params.mid.split(' ')[0];
 			let {data} = await this.$axios.get('/api/user?mid=' + mid);
 			if (data.rows.length) {
 				this.row = data.rows[0];
@@ -62,8 +71,14 @@ export default {
 		present: async function() {
 			const bodyFormData = new FormData();
 			bodyFormData.append('presentation', this.row.presentation);
+			bodyFormData.append('tags', this.row.tags);
 			let {data} = await this.$axios.post('/api/me', bodyFormData);
 			console.log(data);
+		},
+
+		addTag (newTag) {
+			this.options.push(newTag);
+			this.row.tags.push(newTag);
 		}
 	},
 
@@ -90,6 +105,21 @@ div.avatar {
 
 div.avatar img {
 	border-radius: 64px;
+}
+
+ul.tags {
+	list-style: none;
+	padding-left: 0;
+}
+
+ul.tags li {
+	display: inline-block;
+	padding: 4px 8px;
+	background: #41b883;
+	color: white;
+	border-radius: 5px;
+	margin-right: 10px;
+	margin-bottom: 10px;
 }
 
 </style>

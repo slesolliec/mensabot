@@ -11,33 +11,7 @@
 
 			<h2>{{ row.real_name }}</h2>
 
-			<p>Région: <NuxtLink :to="'/region/' + row.region">{{ row.region }}</NuxtLink></p>
-
-			<p><a :href="'https://mensa-france.net/membres/annuaire/?id=' + row.mid">Fiche dans l'annuaire Mensa France</a></p>
-
-			<ul class="tags"><li v-for="tag in row.tags" :key="tag">{{tag}}</li></ul>
-
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
-
-			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
-				<p>
-					Et si vous vous présentiez ? <em>(écrivez en <a href="https://fr.wikipedia.org/wiki/Markdown#Quelques_exemples">MarkDown</a>)</em>
-
-				</p>
-				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea><br>
-				<h4>Etiquettes</h4>				
-				<multiselect v-model="row.tags" :options="options"
-					:multiple="true"
-					:close-on-select="false"
-					:clear-on-select="false"
-					:taggable="true"
-					:tag-placeholder="'Ajouter ce nouveau tag'"
-					:placeholder="'Choisir un tag'"
-					@tag="addTag"></multiselect><br>
-				
-				<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
-			</form>
-
 
 
 		</client-only>
@@ -52,8 +26,7 @@ export default {
 
 	data() {
 		return {
-			row: {},
-			options: ['TDA', 'TDAH', 'TSA']
+			row: {}
 		}
 	},
 
@@ -65,20 +38,10 @@ export default {
 			if (data.rows.length) {
 				this.row = data.rows[0];
 				document.title = document.title.split('/')[0] + " / " + this.row.real_name;
+				if (this.row.mid) {
+					this.$router.push('/user/mid/' + this.row.mid);
+				}
 			}
-		},
-
-		present: async function() {
-			const bodyFormData = new FormData();
-			bodyFormData.append('presentation', this.row.presentation);
-			bodyFormData.append('tags', this.row.tags);
-			let {data} = await this.$axios.post('/api/me', bodyFormData);
-			console.log(data);
-		},
-
-		addTag (newTag) {
-			this.options.push(newTag);
-			this.row.tags.push(newTag);
 		}
 	},
 
