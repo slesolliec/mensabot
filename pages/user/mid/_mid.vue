@@ -19,11 +19,13 @@
 
 			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
 				<p>
-					Et si vous vous présentiez ? <em>(écrivez en <a href="">MarkDown</a>)</em>
+					Et si vous vous présentiez ? <em>(écrivez en <a href="https://fr.wikipedia.org/wiki/Markdown#Quelques_exemples">MarkDown</a>)</em>
 
 				</p>
-				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea>
-				<br><button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
+				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea><br>
+				<multiselect v-model="value" :options="options"></multiselect><br>
+				
+				<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
 			</form>
 
 
@@ -40,14 +42,16 @@ export default {
 
 	data() {
 		return {
-			row: {}
+			row: {},
+			value: null,
+			options: ['list', 'of', 'options']
 		}
 	},
 
 	methods: {
 		
 		getRow: async function () {
-			const mid = parseInt(this.$route.params.id);
+			const mid = parseInt(this.$route.params.mid);
 			let {data} = await this.$axios.get('/api/user?mid=' + mid);
 			if (data.rows.length) {
 				this.row = data.rows[0];

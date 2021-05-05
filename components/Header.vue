@@ -5,7 +5,8 @@
 			<div v-else id="avatar">
 				<img width="48" height="48" :src="'https://cdn.discordapp.com/avatars/' + $auth.user.id + '/' + $auth.user.avatar + '.png'"><br>
 				{{ $auth.user.username }}<span style="opacity:0.5">#{{ $auth.user.discriminator }}</span><br>
-				<a href="/logout" style="margin-right:0;" @click="logout">Déconnexion</a>
+				<a :href="'/user/did/' + $auth.user.id" style="margin-right:0;padding-bottom:0;">Ma fiche</a><br>
+				<a href="/logout" style="margin-right:0;padding-bottom:0;" @click="logout">Déconnexion</a>
 			</div>
 		</div>
 
@@ -78,7 +79,7 @@ header {
 
 #avatar a {
 	display: inline-block;
-	padding-top: 4px;
+	padding-top: 0px;
 	cursor: pointer;
 }
 #avatar a:hover {
