@@ -30,7 +30,8 @@ export default {
 	modules: [
 		'@nuxtjs/axios',
 		'@nuxtjs/auth-next',
-		'@nuxtjs/markdownit'
+		'@nuxtjs/markdownit',
+		'nuxt-vue-multiselect'
 	],
 
 	serverMiddleware: [

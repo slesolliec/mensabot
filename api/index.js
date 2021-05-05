@@ -123,6 +123,13 @@ app.get('/user', async (req, res) => {
 		sql = sql.replace('select ', 'select presentation, ');
 	}
 
+	// get only one user?
+	if (req.query.did) {
+		const did = req.query.did.split(' ')[0];
+		sql += ' and did = ' + did;
+		sql = sql.replace('select ', 'select presentation, ');
+	}
+
 	// get users from a specific region?
 	if (req.query.region) {
 		const region = req.query.region.slice(0, 3);
@@ -158,10 +165,9 @@ app.get('/user', async (req, res) => {
 
 	}
 
-
 	sql += ' order by real_name, discord_name';
 
-	console.log(sql);
+	// console.log(sql);
 	const users = await db.query(sql);
 
 	const responseData = {};
@@ -195,7 +201,15 @@ app.get('/guild', async (req, res) => {
 
 
 app.post('/me', upload.none(), async (req, res) => {
-	const update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
+	console.log(req.body.tags);
+	let update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
+	update = await db.query('delete from tags where mid = ?', [user.mid]);
+	req.body.tags.split(',').map((tag) => {
+		tag = tag.trim();
+		if (tag) {
+			db.query('insert into tags (mid, tag) values (?, ?)', [user.mid, tag]);
+		}
+	});
 	res.json({result: "well done"});
 })
 
