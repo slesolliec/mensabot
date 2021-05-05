@@ -172,6 +172,18 @@ app.get('/user', async (req, res) => {
 
 	const responseData = {};
 	responseData.rows = users;
+
+	// just one user?
+	if (responseData.rows.length == 1) {
+		// we get the tags
+		if (responseData.rows[0].mid) {
+			const tags = await db.query("select tag from tags where mid=? order by tag", [responseData.rows[0].mid]);
+			responseData.rows[0].tags = [];
+			for (const i in tags) {
+				responseData.rows[0].tags.push(tags[i].tag);
+			}
+		}
+	}
 	res.json(responseData);
 })
 

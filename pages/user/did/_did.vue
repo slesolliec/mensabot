@@ -15,6 +15,8 @@
 
 			<p><a :href="'https://mensa-france.net/membres/annuaire/?id=' + row.mid">Fiche dans l'annuaire Mensa France</a></p>
 
+			<ul class="tags"><li v-for="tag in row.tags" :key="tag">{{tag}}</li></ul>
+
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
 			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
@@ -49,7 +51,7 @@ export default {
 	data() {
 		return {
 			row: {},
-			tags: null,
+			tags: [],
 			options: ['list', 'of', 'options']
 		}
 	},
@@ -104,4 +106,18 @@ div.avatar img {
 	border-radius: 64px;
 }
 
+
+ul.tags {
+	list-style: none;
+	padding-left: 0;
+}
+
+ul.tags li {
+	display: inline-block;
+	padding: 4px 8px;
+	background: #41b883;
+	color: white;
+	border-radius: 5px;
+	margin-right: 10px;
+}
 </style>
