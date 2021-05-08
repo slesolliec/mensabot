@@ -3,6 +3,8 @@
 // It calls the Mensa.cafe API instead and sends back the data it got from
 // the Mensa France annuaire.
 
+// TODO: handle when cookie is too old
+
 const needle  = require('needle');
 const cheerio = require('cheerio');
 const axios   = require('axios');
