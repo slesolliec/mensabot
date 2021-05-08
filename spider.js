@@ -9,6 +9,8 @@ const needle  = require('needle');
 const cheerio = require('cheerio');
 const conf    = require('./configs');
 
+log.error("This script is not in use anymore.");
+process.exit();
 
 let cookies;
 

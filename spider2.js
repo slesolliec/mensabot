@@ -3,11 +3,11 @@
 // It calls the Mensa.cafe API instead and sends back the data it got from
 // the Mensa France annuaire.
 
-const log = require('./mods/log');
 const needle  = require('needle');
 const cheerio = require('cheerio');
-const conf    = require('./configs');
 const axios   = require('axios');
+const log     = require('./mods/log');
+const conf    = require('./configs');
 
 
 let cookies = {};
@@ -173,7 +173,10 @@ findNewMensans = async function() {
 	let noobs    = data.noobs;
 	let unknowns = data.unknowns;
 
-	console.log(noobs);
+	log.debug("Found " + noobs.length + " new Mensan(s).");
+	if (noobs.length) {
+		console.log(noobs);
+	}
 
 	while (noobs.length) {
 		const drWho = noobs.pop();
