@@ -12,7 +12,7 @@
 
 		<h1>
 			<NuxtLink to="/">Mensa.cafe</NuxtLink><br>
-			<em>&nbsp;&nbsp;version 0.1.0 alpha</em>
+			<em>&nbsp;&nbsp;version 0.2.0 beta</em>
 		</h1>
 
 		<nav>
