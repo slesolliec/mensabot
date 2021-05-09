@@ -198,7 +198,7 @@ app.get('/region', async (req, res) => {
 app.get('/tag', async (req, res) => {
 
 	const responseData = {};
-	
+
 	if (req.query.tag) {
 		// list all users with that tag
 		let sql = `
@@ -218,7 +218,12 @@ app.get('/tag', async (req, res) => {
 		responseData.rows = users;
 	} else {
 		// list all tags
-		const rows = await db.query('select tag, count(*) as nb from tags group by tag order by tag');
+		const rows = await db.query(`
+			select tag, count(*) as nb
+			from tags
+			group by tag
+			order by nb desc, tag asc`
+		);
 		responseData.rows = rows;
 	}
 	res.json(responseData);

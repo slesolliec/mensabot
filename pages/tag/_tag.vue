@@ -1,7 +1,7 @@
 <template>
 	<div>
 
-		<h2>Tag : {{ tag }}</h2>
+		<h2>Tag : <span class="tags">{{ tag }}</span></h2>
 
 		<client-only>
 
@@ -63,3 +63,19 @@ export default {
 }
 
 </script>
+
+<style>
+
+h2 span.tags {
+	text-decoration: none;
+	display: inline-block;
+	padding: 4px 8px;
+	background: #41b883;
+	color: white;
+	border-radius: 5px;
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
+
+
+</style>

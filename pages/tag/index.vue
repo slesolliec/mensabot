@@ -4,20 +4,9 @@
 
 		<client-only>
 
-		<table class="list">
-			<thead>
-				<tr>
-					<th>Tags</th>
-					<th>Nombre</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="row in rows" :key="row.mid">
-					<td><NuxtLink :to="'/tag/' + row.tag">{{ row.tag }}</NuxtLink></td>
-					<td style="text-align:right;">{{ row.nb }}</td>
-				</tr>
-			</tbody>
-		</table>
+			<NuxtLink v-for="row in rows" :key="row.tag" :to="'/tag/' + row.tag" class="tags">
+				{{ row.tag }} | {{ row.nb }}
+			</NuxtLink>
 
 		</client-only>
 
@@ -50,7 +39,17 @@ export default {
 </script>
 
 
-<style scoped>
+<style>
 
+a.tags {
+	text-decoration: none;
+	display: inline-block;
+	padding: 4px 8px;
+	background: #41b883;
+	color: white;
+	border-radius: 5px;
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
 
 </style>
