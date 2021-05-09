@@ -103,7 +103,6 @@ async function checkAccess(req, res, next) {
 		// we don't know that user, or it is not validated
 		return res.sendStatus(401).send("Unknown or un-validated user");
 	}
-
 }
 app.use(checkAccess)
 
@@ -192,6 +191,36 @@ app.get('/region', async (req, res) => {
 	const rows = await db.query('select region, count(*) as nb from users where state = "validated" group by region order by region');
 	const responseData = {};
 	responseData.rows = rows;
+	res.json(responseData);
+})
+
+
+app.get('/tag', async (req, res) => {
+
+	const responseData = {};
+	
+	if (req.query.tag) {
+		// list all users with that tag
+		let sql = `
+		select mid, real_name, region, adherent,
+			did, discord_name, discord_discriminator, discord_avatar,
+			length(presentation) as presentationLength
+		from users
+		where state = "validated"
+		 and mid in (
+			 select mid from tags where tag = ?
+		 )
+		order by real_name, discord_name`;
+
+		// console.log(sql);
+		const users = await db.query(sql, [req.query.tag]);
+	
+		responseData.rows = users;
+	} else {
+		// list all tags
+		const rows = await db.query('select tag, count(*) as nb from tags group by tag order by tag');
+		responseData.rows = rows;
+	}
 	res.json(responseData);
 })
 
