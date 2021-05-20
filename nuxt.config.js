@@ -27,6 +27,10 @@ export default {
 
 	components: true,
 
+	plugins: [
+		{ src: '~plugins/filters.js', ssr: false },
+	],
+	
 	modules: [
 		'@nuxtjs/axios',
 		'@nuxtjs/auth-next',
