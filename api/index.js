@@ -368,9 +368,9 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 		if (req.file) {
 			const ext = req.file.originalname.split('.').slice(-1)[0];
 			if (['png', 'gif', 'jpg', 'jpeg'].includes(ext)) {
-				fs.rename(req.file.path, 'static/book/' + bid + '.' + ext, function (err) {
+				fs.rename(req.file.path, 'static/book_cover/' + bid + '.' + ext, function (err) {
 					if (err) throw err
-					console.log('File ' + req.file.path + ' successfully moved to static/book/' + bid + '.' + ext);
+					console.log('File ' + req.file.path + ' successfully moved to static/book_cover/' + bid + '.' + ext);
 				});
 				db.query('update books set cover_ext = ? where id = ?', [ext, bid]);
 			}
