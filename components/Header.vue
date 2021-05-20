@@ -20,6 +20,7 @@
 			<NuxtLink to="/user">Utilisateurs</NuxtLink>
 			<NuxtLink to="/region">Régions</NuxtLink>
 			<NuxtLink to="/guild">Serveurs</NuxtLink>
+			<NuxtLink to="/book">Livres</NuxtLink>
 			<NuxtLink to="/tag">Tags</NuxtLink>
 			<NuxtLink to="/user/trombinoscope">Trombinoscope</NuxtLink>
 		</nav>

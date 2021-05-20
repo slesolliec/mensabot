@@ -15,7 +15,7 @@
 
 			<p><a :href="'https://mensa-france.net/membres/annuaire/?id=' + row.mid">Fiche dans l'annuaire Mensa France</a></p>
 
-			<ul class="tags"><li v-for="tag in row.tags" :key="tag">{{tag}}</li></ul>
+			<ul class="tags"><li v-for="tag in row.tags" :key="tag"><nuxt-link :to="'/tag/' + tag">{{tag}}</nuxt-link></li></ul>
 
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
@@ -120,6 +120,11 @@ ul.tags li {
 	border-radius: 5px;
 	margin-right: 10px;
 	margin-bottom: 10px;
+}
+
+ul.tags li a {
+	text-decoration: none;
+	color: white;
 }
 
 </style>

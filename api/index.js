@@ -1,13 +1,17 @@
 // API module based on:
 
 import express from 'express'
+import { fstat } from 'fs';
 // import { auth0 } from '@nuxtjs/auth-next';
 const cookieParser = require("cookie-parser");
-const axios = require("axios");
+const axios        = require("axios");
 // http://expressjs.com/en/resources/middleware/multer.html
-const multer  = require('multer');
-const upload = multer({ dest: 'uploads/' });
-const basicAuth = require('basic-auth');
+const multer       = require('multer');
+const upload       = multer({ dest: 'uploads/' });
+const basicAuth    = require('basic-auth');
+const moment       = require('moment');
+const fs           = require('fs');
+
 
 const db = require('../mods/db');
 
@@ -247,7 +251,7 @@ app.get('/guild', async (req, res) => {
 
 
 app.post('/me', upload.none(), async (req, res) => {
-	console.log(req.body.tags);
+	// console.log(req.body.tags);
 	let update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
 	update = await db.query('delete from tags where mid = ?', [user.mid]);
 	req.body.tags.split(',').map((tag) => {
@@ -257,6 +261,151 @@ app.post('/me', upload.none(), async (req, res) => {
 		}
 	});
 	res.json({result: "well done"});
+})
+
+
+async function getAllBooks(req, res) {
+	let books;
+	if (req.query.tag) {
+		const sql = `
+			select books.*
+			from books, tags
+			where books.id = tags.book_id
+			  and tags.tag = ?
+			order by id desc`;
+		books = await db.query(sql, [req.query.tag]);
+	} else {
+		const sql = `select * from books	order by id desc`;
+		books = await db.query(sql);
+	}
+
+	for (const i in books) {
+		// get reviews
+		books[i].reviews = await db.query(`
+			select reviews.rating,
+				users.mid,
+				users.real_name
+			from reviews, users
+			where reviews.book_id = ?
+			  and reviews.mid = users.mid`, [books[i].id]);
+		// get tags
+		books[i].tags = await db.query("select tag from tags where book_id = ?", books[i].id);
+	}
+	
+	const responseData = {};
+	responseData.rows = books;
+
+	// get all tags
+	if (! req.query.tag) {
+		let tags = await db.query(`
+			select tag, count(*) as nb
+			from tags
+			where book_id is not null
+			group by tag
+			order by nb desc, tag asc`);
+		responseData.tags = tags;
+	}
+
+	return res.json(responseData);
+}
+
+app.get('/book', async (req, res) => {
+	if (req.query.id) {
+		const bid  = parseInt(req.query.id);
+		const books = await db.query('select * from books where id = ?', [bid]);
+		const tags = await db.query('select tag from tags where book_id = ?', [bid]);
+		return res.json({rows: books, tags: tags});
+	}
+
+	// default
+	return getAllBooks(req, res);
+});
+
+async function getReviewsForBook(req, res) {
+	let bid;
+	if (req.query.id ) bid  = parseInt(req.query.id);
+	if (req.body.id)   bid  = parseInt(req.body.id);
+
+	if (bid) {
+		const reviews = await db.query(`
+			select reviews.*,
+				users.mid,
+				users.real_name
+			from reviews, users
+			where reviews.book_id = ?
+			  and reviews.mid = users.mid
+			`, [bid]);
+		return res.json({rows: reviews});
+	}
+	return res.status(404);
+}
+
+
+app.get('/reviews', getReviewsForBook);
+
+
+// app.post('/book', upload.none(), async (req, res) => {
+app.post('/book', upload.single('couv'), async (req, res) => {
+
+	let bid;
+
+	// console.log(req.file);
+	// console.log(req.body);
+
+	if (req.body.id) {
+		bid = parseInt(req.body.id);
+	} else {
+		// add the book
+		const book = await db.query('insert into books (title, authors, year, created_at) values (?, ?, ?, ?)', [
+			req.body.title,
+			req.body.authors,
+			parseInt(req.body.year),
+			moment().format('YYYY-MM-DD HH:mm:ss')
+		]);
+		bid = book.insertId;
+
+		// handle cover
+		if (req.file) {
+			const ext = req.file.originalname.split('.').slice(-1)[0];
+			if (['png', 'gif', 'jpg', 'jpeg'].includes(ext)) {
+				fs.rename(req.file.path, 'static/book/' + bid + '.' + ext, function (err) {
+					if (err) throw err
+					console.log('File ' + req.file.path + ' successfully moved to static/book/' + bid + '.' + ext);
+				});
+				db.query('update books set cover_ext = ? where id = ?', [ext, bid]);
+			}
+		}
+
+		// add the tags
+		req.body.tags.split(',').map((tag) => {
+			tag = tag.trim();
+			if (tag) {
+				db.query('insert into tags (book_id, tag) values (?, ?)', [bid, tag]);
+			}
+		});
+	}
+
+
+	// the new id is book.insertId
+	// once we have the book we add the comment
+	let rating = parseInt(req.body.rating);
+	if (rating > 5) rating = 5;
+	if (rating < 0) rating = 0;
+	await db.query('delete from reviews where book_id = ? and mid = ?', [bid, user.mid]);
+	const review = await db.query('insert into reviews (book_id, mid, created_at, rating, comment) values (?, ?, ?, ?, ?)', [
+		bid,
+		user.mid,
+		moment().format('YYYY-MM-DD HH:mm:ss'),
+		rating,
+		req.body.review
+	]);
+
+	// case we were on the book page
+	if (req.body.id) {
+		return getReviewsForBook(req, res);
+	}
+
+	return getAllBooks(req, res);
 })
 
 
