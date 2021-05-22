@@ -12,11 +12,11 @@
 
 		<h1>
 			<NuxtLink to="/">Mensa.cafe</NuxtLink><br>
-			<em>&nbsp;&nbsp;version 0.2.0 beta</em>
+			<em>&nbsp;&nbsp;version 0.3.0 beta</em>
 		</h1>
 
 		<nav>
-			<NuxtLink to="/">Accueil</NuxtLink>
+			<NuxtLink to="/"><i class="fas fa-home"></i></NuxtLink>
 			<NuxtLink to="/user">Utilisateurs</NuxtLink>
 			<NuxtLink to="/region">Régions</NuxtLink>
 			<NuxtLink to="/guild">Serveurs</NuxtLink>

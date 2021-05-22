@@ -10,3 +10,6 @@ logs
 *.log
 
 test_*
+
+uploads/*
+static/book_cover/*

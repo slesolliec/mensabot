@@ -4,6 +4,7 @@ const conf    = require('../configs');
 const db      = require('./db');
 const fs      = require('fs');
 const log     = require('./log');
+const moment  = require('moment');
 const nodemailer = require('nodemailer');
 
 const bot = {};
@@ -289,7 +290,10 @@ async function handleIncomingMessage(message) {
 
         // we check the validation code is good
         if (theUser.validation_code == vcode) {
-            db.query("update users set state='validated' where did = ?", [message.author.id]);
+            db.query("update users set state='validated', created_at = ? where did = ?", [
+                moment().format('YYYY-MM-DD HH:mm:ss'),
+                message.author.id
+            ]);
 
             sendDirectMessage(message.author, await getMessage(theUser, 'validated'));
             return;

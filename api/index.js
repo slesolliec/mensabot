@@ -170,6 +170,21 @@ app.get('/user', async (req, res) => {
 
 	sql += ' order by real_name, discord_name';
 
+	// get noob users for home page
+	if (req.query.noobs) {
+		sql = `
+		select mid, real_name, region, 
+			did, discord_name, discord_discriminator,
+			length(presentation) as presentationLength,
+			created_at
+		from users
+		where state = "validated"
+		  and created_at is not null
+		order by created_at desc
+		limit 5
+		`;
+	}
+
 	// console.log(sql);
 	const users = await db.query(sql);
 
