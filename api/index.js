@@ -267,7 +267,14 @@ app.get('/guild', async (req, res) => {
 
 app.post('/me', upload.none(), async (req, res) => {
 	// console.log(req.body.tags);
-	let update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation , user.mid])
+	let update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation, user.mid])
+	// set created_at for user if empty
+	if (! user.created_at) {
+		db.query('update users set created_at = ? where mid = ?', [
+			moment().format('YYYY-MM-DD HH:mm:ss'),
+			user.mid
+		]);
+	}
 	update = await db.query('delete from tags where mid = ?', [user.mid]);
 	req.body.tags.split(',').map((tag) => {
 		tag = tag.trim();
