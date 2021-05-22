@@ -290,7 +290,7 @@ async function getAllBooks(req, res) {
 			order by id desc`;
 		books = await db.query(sql, [req.query.tag]);
 	} else {
-		const sql = `select * from books	order by id desc`;
+		const sql = `select * from books order by id desc`;
 		books = await db.query(sql);
 	}
 
@@ -330,6 +330,32 @@ app.get('/book', async (req, res) => {
 		const books = await db.query('select * from books where id = ?', [bid]);
 		const tags = await db.query('select tag from tags where book_id = ?', [bid]);
 		return res.json({rows: books, tags: tags});
+	}
+
+	if (req.query.best) {
+		let sql = `
+			select books.*, sum(reviews.rating) as stars
+			from books, reviews
+			where books.id = reviews.book_id
+			group by books.id
+			order by stars desc
+			limit 5
+			`;
+		const books = await db.query(sql, []);
+
+		for (const i in books) {
+			// get reviews
+			books[i].reviews = await db.query(`
+				select reviews.rating,
+					users.mid,
+					users.real_name
+				from reviews, users
+				where reviews.book_id = ?
+				  and reviews.mid = users.mid
+				order by reviews.created_at desc`, [books[i].id]);
+		}
+
+		return res.json({rows: books});
 	}
 
 	// default

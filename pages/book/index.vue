@@ -177,7 +177,7 @@ form i.fa-star {
 
 div.bookwrapper {
 	display: grid;
-	grid-template-columns: 90px 150px auto;
+	grid-template-columns: 90px 220px auto;
 	grid-gap: 5px;
   	margin:  8px 0;
 	padding: 10px 10px 8px 10px;

@@ -50,6 +50,35 @@
 			</table>
 
 		</div>
+
+		<div v-if="books.length">
+			<h3>Les livres les plus populaires ...</h3>
+
+			<div class="bookwrapper" v-for="row in books" :key="row.id">
+				<div class="cover"><img v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="80" height="130"></div>
+				<div class="book">
+					<nuxt-link :to="'/book/' + row.id">{{ row.title }}</nuxt-link><br>
+					{{ row.authors }}<br>
+					<span v-if="row.year">{{ row.year }}<br></span>
+				</div>
+				<div class="reviews">
+					<div v-for="rev in row.reviews">
+						<i :class="rev.rating > 0 ? 'fas fa-star' : 'far fa-star'"></i><i
+							:class="rev.rating > 1 ? 'fas fa-star' : 'far fa-star'"></i><i
+							:class="rev.rating > 2 ? 'fas fa-star' : 'far fa-star'"></i><i
+							:class="rev.rating > 3 ? 'fas fa-star' : 'far fa-star'"></i><i
+							:class="rev.rating > 4 ? 'fas fa-star' : 'far fa-star'"></i>
+						par <nuxt-link :to="'/user/mid/' + rev.mid">{{ rev.real_name }}</nuxt-link>
+					</div>
+				</div>
+				<div class="tags">
+					<ul class="tags">
+						<li v-for="tag in row.tags" :key="tag.tag"><nuxt-link :to="'/tag/' + tag.tag">{{tag.tag}}</nuxt-link></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
 	</client-only>
 
 
@@ -64,7 +93,8 @@ export default {
 	data() {
 		return {
 			botstatus: {},
-			noobs: []
+			noobs: [],
+			books: []
 		}
 	},
 
@@ -78,6 +108,11 @@ export default {
 		getNoobs: async function() {
 			let {data} = await this.$axios.get('/api/user?noobs=1');
 			this.noobs = data.rows;
+		},
+
+		getBooks: async function() {
+			let {data} = await this.$axios.get('/api/book?best=1');
+			this.books = data.rows;
 		}
 
   },
@@ -85,6 +120,7 @@ export default {
 	mounted: function() {
 		this.getStatus();
 		this.getNoobs();
+		this.getBooks();
 		document.title = document.title.split('/')[0] + ' / Accueil';
 	}
 
