@@ -378,6 +378,7 @@ async function getReviewsForBook(req, res) {
 		const reviews = await db.query(`
 			select reviews.*,
 				users.mid,
+				users.did,
 				users.real_name
 			from reviews, users
 			where reviews.book_id = ?

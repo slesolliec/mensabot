@@ -90,6 +90,12 @@ export default {
 			let {data} = await this.$axios.get('/api/reviews?id=' + bid);
 			if (data.rows.length) {
 				this.reviews = data.rows;
+				for (const i in this.reviews) {
+					if (this.reviews[i].did == this.$auth.user.id) {
+						this.rating    = this.reviews[i].rating;
+						this.newReview = this.reviews[i].comment;
+					}
+				}
 			}
 		},
 
@@ -103,8 +109,12 @@ export default {
 			this.reviews = data.rows;
 			// reset form
 			this.showForm   = false;
-			this.rating     = 0;
-			this.newReview  = '';
+			for (const i in this.reviews) {
+				if (this.reviews[i].did == this.$auth.user.id) {
+					this.rating    = this.reviews[i].rating;
+					this.newReview = this.reviews[i].comment;
+				}
+			}
 		},
 	},
 
