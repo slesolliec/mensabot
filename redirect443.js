@@ -1,4 +1,5 @@
 const express = require('express');
+const log     = require('./mods/log');
 
 // set up plain http server
 const http = express();
@@ -13,3 +14,5 @@ http.get('*', function(req, res) {
 
 // have it listen on 80
 http.listen(80);
+
+log.debug("Redirecting port 80 to https://");
