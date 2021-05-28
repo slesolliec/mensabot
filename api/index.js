@@ -335,6 +335,13 @@ app.get('/book', async (req, res) => {
 	if (req.query.id) {
 		const bid  = parseInt(req.query.id);
 		const books = await db.query('select * from books where id = ?', [bid]);
+		if (! books.length) {
+			return res.status(404).send("No book found with id=" + req.query.id);
+		}
+		// is it my book?
+		if (user.mid == books[0].mid || user.mid == 11248) {
+			books[0].mine = true;
+		}
 		const tags = await db.query('select tag from tags where book_id = ?', [bid]);
 		return res.json({rows: books, tags: tags});
 	}
@@ -405,11 +412,12 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 		bid = parseInt(req.body.id);
 	} else {
 		// add the book
-		const book = await db.query('insert into books (title, authors, year, created_at) values (?, ?, ?, ?)', [
+		const book = await db.query('insert into books (title, authors, year, created_at, mid) values (?, ?, ?, ?, ?)', [
 			req.body.title,
 			req.body.authors,
 			parseInt(req.body.year),
-			moment().format('YYYY-MM-DD HH:mm:ss')
+			moment().format('YYYY-MM-DD HH:mm:ss'),
+			user.mid
 		]);
 		bid = book.insertId;
 
@@ -455,6 +463,37 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 	}
 
 	return getAllBooks(req, res);
+})
+
+// we only add a cover to the book
+app.post('/book-update', upload.single('couv'), async (req, res) => {
+
+	const bid = parseInt(req.body.id);
+
+	// get the book
+	const books = await db.query('select * from books where id = ?', [bid]);
+	if (! books.length) {
+		return res.status(404).send("No book found with id=" + req.query.id);
+	}
+	// is it my book?
+	if (user.mid != books[0].mid && user.mid != 11248) {
+		return res.status(403).send("you don't have write access to that book");
+	}
+	// handle cover upload
+	if (req.file) {
+		const ext = req.file.originalname.split('.').slice(-1)[0];
+		if (['png', 'gif', 'jpg', 'jpeg'].includes(ext)) {
+			fs.rename(req.file.path, 'static/book_cover/' + bid + '.' + ext, function (err) {
+				if (err) throw err
+				console.log('File ' + req.file.path + ' successfully moved to static/book_cover/' + bid + '.' + ext);
+			});
+			db.query('update books set cover_ext = ? where id = ?', [ext, bid]);
+			books[0].cover_ext = ext;
+		}
+	}
+
+	const tags = await db.query('select tag from tags where book_id = ?', [bid]);
+	return res.json({rows: books, tags: tags});
 })
 
 

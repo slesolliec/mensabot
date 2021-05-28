@@ -3,7 +3,18 @@
 
 		<client-only>
 
-			<img class="cover" v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="100" height="180">
+			<img class="cover" v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="110" height="180">
+			<div v-else>
+				<form id="addCover" v-if="row.mine" v-on:submit.prevent="addCover" method="post" enctype="multipart/form-data">
+					<p>Il n'y a pas de couverture pour ce livre. Pouvez-vous <a :href="'https://www.qwant.com/?q=' + row.title.split(' ').join('+') + '+' + row.authors.split(' ').join('+') + '+book+cover&t=images'">la chercher</a>, puis l'uploader via ce formulaire ?<br>
+						<em>Essayez de ne pas choisir une image trop grosse (supérieure à 500 pixels).</em>
+					</p>
+					<label for="couverture">Couverture</label>
+					<input type="file" name="couverture" id="couv" ref="couv" @change="handleCouv" /><br>
+					<label></label> <button type="submit">Enregistrer</button>
+				</form>
+			</div>
+
 
 			<h2>{{ row.title }}</h2>
 
@@ -66,7 +77,8 @@ export default {
 			showForm: false,
 			rating: 0,
 			newReview: '',
-			options: ['BD', 'SF', 'Polar']
+			options: ['BD', 'SF', 'Polar'],
+			couv: undefined
 		}
 	},
 
@@ -116,6 +128,18 @@ export default {
 				}
 			}
 		},
+
+		addCover: async function() {
+			const bodyFormData = new FormData();
+			bodyFormData.append('id',      this.row.id);
+			bodyFormData.append('couv',    this.couv);
+			let {data} = await this.$axios.post('/api/book-update', bodyFormData);
+			this.row = data.rows[0];
+		},
+
+		handleCouv () {
+			this.couv = this.$refs.couv.files[0];
+		}
 	},
 
 	mounted: function() {
@@ -148,6 +172,12 @@ div.review {
 	border: 1px solid #CCC;
 	background: linear-gradient(90deg, #ddd, #ccc);
 	box-shadow: inset 1px 1px 3px #666666;
+}
+
+form#addCover {
+	padding: 4px 8px 4px 8px;
+	background: #e2a011;
+	box-shadow: inset 1px 1px 3px #333333;
 }
 
 </style>
