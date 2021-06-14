@@ -100,6 +100,17 @@ async function reMember(member) {
         theMember = await db.getMember(member.guild.id, member.user.id);
     }
 
+    // is the member an admin?
+    if (theMember.is_admin) {
+        if (member.permissions.serialize()['ADMINISTRATOR'] == 0) {
+            await db.query("update members set is_admin = 0 where gid = ? and did = ?", [member.guild.id, member.user.id]);
+        }
+    } else {
+        if (member.permissions.serialize()['ADMINISTRATOR'] == 1) {
+            await db.query("update members set is_admin = 1 where gid = ? and did = ?", [member.guild.id, member.user.id]);
+        }
+    }
+
     // check if the member is alreayd identified as Mensan
     if (theMember.state == 'member')
         return;

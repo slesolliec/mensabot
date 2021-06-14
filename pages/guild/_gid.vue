@@ -46,6 +46,7 @@
 							<th>Discord</th>
 							<th>Région</th>
 							<th><abbr title="Adhésion à jour">Adh.</abbr></th>
+							<th>Status</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -57,6 +58,15 @@
 							<td style="text-align:center">
 								<i v-if="row.adherent == 1" class="fas fa-certificate" style="color: green;"></i>
 								<i v-if="row.adherent == 0" class="fas fa-certificate" style="color: red;"></i>
+							</td>
+							<td>
+								<span v-if="row.state == 'new'">Nouveau</span>
+								<span v-if="row.state == 'welcomed'">Bienvenu</span>
+								<span v-if="row.state == 'found'">Trouvé dans l'annuaire</span>
+								<span v-if="row.state == 'vcode_sent'">
+									Code de confirmation envoyé
+									| <i class="fas fa-redo-alt" title="renvoyer" @click="resendCode(row.mid)" style="cursor: pointer;"></i>
+								</span>
 							</td>
 						</tr>
 					</tbody>
@@ -92,6 +102,16 @@ export default {
 			document.title = document.title.split('/')[0] + " / Serveur / " + this.guild;
 			let resp2 = await this.$axios.get('/api/user?guild=' + this.guild + '&unval=idated');
 			this.unvalidateds = resp2.data.rows;
+		},
+
+		resendCode: async function(mid) {
+			const bodyFormData = new FormData();
+			bodyFormData.append('action', 'resend_vcode');
+			bodyFormData.append('mid', mid);
+			bodyFormData.append('gid', this.guild);
+			await this.$axios.post('/api/userchange', bodyFormData);
+
+			this.getRows();
 		}
 	},
 

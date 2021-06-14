@@ -113,7 +113,7 @@ app.use(checkAccess)
 
 app.get('/user', async (req, res) => {
 	let sql = `
-		select mid, real_name, region, adherent,
+		select mid, real_name, region, adherent, state,
 			did, discord_name, discord_discriminator, discord_avatar,
 			length(presentation) as presentationLength
 		from users
@@ -146,26 +146,14 @@ app.get('/user', async (req, res) => {
 
 		// special case: unvalidated users for admins
 		if (req.query.unval == 'idated') {
-			// we check we are guild owner
-			let isOwner = db.query("select * from members where gid = ? and did = ?", [
-				guild, user.did
-			]);
 
-			if (user.did != '396752710487113729') {
-				if (isOwner.length == 0) {
-					res.json({rows: []});
-					return;
-				}
-				
-				if (isOwner[0].state != 'owner') {
-					res.json({rows: []});
-					return;
-				}
+			if ( ! isGuildAdmin(guild, user.did)) {
+				res.json({rows: []});
+				return;
 			}
 
 			sql = sql.replace('state = "validated"', 'state <> "validated"');
 		} 
-
 	}
 
 	sql += ' order by real_name, discord_name';
@@ -204,6 +192,35 @@ app.get('/user', async (req, res) => {
 	}
 	res.json(responseData);
 })
+
+
+async function isGuildAdmin(gid, did) {
+	let zeMember = await db.query("select * from members where gid = ? and did = ?", [gid, did]);
+
+	// me
+	if (did == '396752710487113729') return true;
+
+	if (zeMember.length)
+		if ((zeMember[0].state == 'owner') || zeMember[0].is_admin)
+			return true;
+
+	return false;
+}
+
+
+app.post('/userchange', upload.none(), async (req, res) => {
+	if ( ! isGuildAdmin(req.body.gid, user.did))
+		return res.sendStatus(403);
+	
+	if (req.body.action == 'resend_vcode') {
+		// on remet le mec en "found"
+		const sql = `update users set state = 'found' where mid = ? and state = 'vcode_sent'`;
+		db.query(sql, [parseInt(req.body.mid)]);
+	}
+
+	return res.sendStatus(200);
+})
+
 
 
 app.get('/region', async (req, res) => {

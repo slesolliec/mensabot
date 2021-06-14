@@ -89,7 +89,8 @@ pool.getMember = async function(gid, did) {
   select
     cast(gid as char) as gid,
     cast(did as char) as did,
-    state
+    state,
+    is_admin
   from members
   where gid = ?
     and did = ?
