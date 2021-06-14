@@ -38,6 +38,29 @@
 
 				<p>Voici les utilisateurs de ce serveur non validés comme membres de Mensa</p>
 
+				<table class="legend">
+					<tr>
+						<th>Status</th>
+						<th>Explications</th>
+					</tr>
+					<tr>
+						<td>Nouveau</td>
+						<td>Nouvel utilisateur. Le bot ne lui a pas encore souhaité la bienvenue.</td>
+					</tr>
+					<tr>
+						<td>Bienvenu</td>
+						<td>Le bot a envoyé le message de bienvenue à la personne, en lui demandant son numéro d'adhérent Mensa-France.</td>
+					</tr>
+					<tr>
+						<td>Trouvé</td>
+						<td>Le bot a trouvé la personne dans l'annuaire de Mensa-France.</td>
+					</tr>
+					<tr>
+						<td>Code&nbsp;envoyé</td>
+						<td>Le bot a envoyé le code de confirmation au membre sur son courriel.</td>
+					</tr>
+				</table>
+
 				<table class="list">
 					<thead>
 						<tr>
@@ -62,9 +85,9 @@
 							<td>
 								<span v-if="row.state == 'new'">Nouveau</span>
 								<span v-if="row.state == 'welcomed'">Bienvenu</span>
-								<span v-if="row.state == 'found'">Trouvé dans l'annuaire</span>
+								<span v-if="row.state == 'found'">Trouvé</span>
 								<span v-if="row.state == 'vcode_sent'">
-									Code de confirmation envoyé
+									Code envoyé
 									| <i class="fas fa-redo-alt" title="renvoyer" @click="resendCode(row.mid)" style="cursor: pointer;"></i>
 								</span>
 							</td>
@@ -122,3 +145,18 @@ export default {
 }
 
 </script>
+
+
+<style>
+table.legend th {
+	background: #CCC;
+	padding: 4px;
+}
+
+table.legend td {
+	background: linear-gradient(90deg, #DDD, #EEE);
+	vertical-align: top;
+	padding: 4px;
+}
+
+</style>
