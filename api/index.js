@@ -30,6 +30,11 @@ async function checkAccess(req, res, next) {
 		return next();
 	}
 
+	// this data is open to anyone
+	if (req.url == '/stats') {
+		return next();
+	}
+
 	// basic-auth for Spider
 	if (req.url == '/spider') {
 		let spider = basicAuth(req);
@@ -109,6 +114,22 @@ async function checkAccess(req, res, next) {
 	}
 }
 app.use(checkAccess)
+
+
+app.get('/stats', async (req, res) => {
+	const stats = {};
+
+	let data = await db.query('select count(*) as nb from users where state = "validated" ');
+	stats.members = data[0].nb;
+
+	data = await db.query('select count(*) as nb from guilds where is_active = 1 ');
+	stats.guilds = data[0].nb;
+
+	data = await db.query('select count(*) as nb from books ');
+	stats.books = data[0].nb;
+
+	res.json({stats});
+})
 
 
 app.get('/user', async (req, res) => {

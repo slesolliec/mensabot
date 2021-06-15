@@ -12,8 +12,18 @@
 
 		<h1>
 			<NuxtLink to="/">Mensa.cafe</NuxtLink><br>
-			<em>&nbsp;&nbsp;version 0.3.0 beta</em>
+			<em>&nbsp;&nbsp;version 0.3.1 beta</em>
 		</h1>
+
+
+		<table id="statistics">
+			<tbody>
+				<tr><td style="text-align:right;">{{ stats.members }}</td><td>membres</td></tr>
+				<tr><td style="text-align:right;">{{ stats.guilds  }}</td><td>serveurs</td></tr>
+				<tr><td style="text-align:right;">{{ stats.books   }}</td><td>livres</td></tr>
+			</tbody>
+		</table>
+
 
 		<nav>
 			<NuxtLink to="/"><i class="fas fa-home"></i></NuxtLink>
@@ -31,15 +41,35 @@
 
 <script>
 export default {
-    methods: {
-        login() {
+
+	data() {
+		return {
+			stats: {}
+		}
+	},
+
+
+	methods: {
+
+		getRows: async function () {
+			let {data} = await this.$axios.get('/api/stats');
+			this.stats = data.stats;
+		},
+
+		login() {
             this.$auth.loginWith('discord', { params: { response_type: 'token' } })
         },
 		
 		async logout() {
  			await this.$auth.logout()
 		}
-     }
+     },
+
+	mounted: function() {
+		this.getRows();
+	}
+
+
 }
 </script>
 
@@ -149,6 +179,13 @@ header div span {
 }
 
 nav {
+}
+
+#statistics {
+	position: absolute; top: 20px; left: 500px;
+	font-size: 12px;
+	opacity: 0.8;
+
 }
 
 

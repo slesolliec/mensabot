@@ -10,6 +10,7 @@
 			<table class="list">
 				<thead>
 					<tr>
+						<th class="counter">#</th>
 						<th><abbr title="A rédigé une présentation">P.</abbr></th>
 						<th>Nom</th>
 						<th>Discord</th>
@@ -19,6 +20,7 @@
 				</thead>
 				<tbody>
 					<tr v-for="row in rows" :key="row.mid">
+						<td class="counter">{{ getCounter() }}</td>
 						<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 						<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 						<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
@@ -64,6 +66,7 @@
 				<table class="list">
 					<thead>
 						<tr>
+							<th class="counter">#</th>
 							<th><abbr title="A rédigé une présentation">P.</abbr></th>
 							<th>Nom</th>
 							<th>Discord</th>
@@ -74,6 +77,7 @@
 					</thead>
 					<tbody>
 						<tr v-for="row in unvalidateds" :key="row.mid">
+							<td class="counter">{{ getCounter2() }}</td>
 							<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 							<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 							<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
@@ -112,8 +116,15 @@ export default {
 		return {
 			guild: '',
 			rows: [],
-			unvalidateds: []
+			unvalidateds: [],
+			i: 0,
+			i2: 0
 		}
+	},
+
+	beforeUpdate() {
+		this.i = 0;
+		this.i2 = 0;
 	},
 
 	methods: {
@@ -135,7 +146,18 @@ export default {
 			await this.$axios.post('/api/userchange', bodyFormData);
 
 			this.getRows();
+		},
+
+		getCounter: function() {
+			this.i += 1;
+			return this.i;
+		},
+
+		getCounter2: function() {
+			this.i2 += 1;
+			return this.i2;
 		}
+
 	},
 
 	mounted: function() {
@@ -157,6 +179,10 @@ table.legend td {
 	background: linear-gradient(90deg, #DDD, #EEE);
 	vertical-align: top;
 	padding: 4px;
+}
+
+table.list td.counter, table.list th.counter {
+	text-align: right;
 }
 
 </style>
