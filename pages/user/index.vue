@@ -17,8 +17,8 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="row in rows" :key="row.mid">
-					<td class="counter">{{ getCounter() }}</td>
+				<tr v-for="(row, i) in rows" :key="row.mid">
+					<td class="counter">{{ i + 1 }}</td>
 					<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 					<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 					<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
@@ -41,13 +41,8 @@
 export default {
 	data() {
 		return {
-			rows: [],
-			i: 0
+			rows: []
 		}
-	},
-
-	beforeUpdate() {
-		this.i = 0;
 	},
 
 	methods: {
@@ -56,12 +51,7 @@ export default {
 			let {data} = await this.$axios.get('/api/user');
 			this.rows = data.rows;
 			document.title = document.title.split('/')[0] + " / Membres";
-		},
-
-		getCounter: function() {
-			this.i += 1;
-			return this.i;
-		},
+		}
 
 	},
 

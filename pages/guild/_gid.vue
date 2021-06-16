@@ -19,8 +19,8 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="row in rows" :key="row.mid">
-						<td class="counter">{{ getCounter() }}</td>
+					<tr v-for="(row, i) in rows" :key="row.mid">
+						<td class="counter">{{ i + 1 }}</td>
 						<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 						<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 						<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
@@ -76,8 +76,8 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in unvalidateds" :key="row.mid">
-							<td class="counter">{{ getCounter2() }}</td>
+						<tr v-for="(row, i) in unvalidateds" :key="row.mid">
+							<td class="counter">{{ i + 1 }}</td>
 							<td><i v-if="row.presentationLength" class="far fa-address-card" style="font-size: 16px;"></i></td>
 							<td><nuxt-link :to="'/user/mid/' + row.mid">{{ row.real_name }}</nuxt-link></td>
 							<td>{{ row.discord_name }}<span class="discriminator">#{{ row.discord_discriminator }}</span></td>
@@ -116,15 +116,8 @@ export default {
 		return {
 			guild: '',
 			rows: [],
-			unvalidateds: [],
-			i: 0,
-			i2: 0
+			unvalidateds: []
 		}
-	},
-
-	beforeUpdate() {
-		this.i = 0;
-		this.i2 = 0;
 	},
 
 	methods: {
@@ -146,16 +139,6 @@ export default {
 			await this.$axios.post('/api/userchange', bodyFormData);
 
 			this.getRows();
-		},
-
-		getCounter: function() {
-			this.i += 1;
-			return this.i;
-		},
-
-		getCounter2: function() {
-			this.i2 += 1;
-			return this.i2;
 		}
 
 	},
