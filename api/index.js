@@ -507,7 +507,8 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 		return getReviewsForBook(req, res);
 	}
 
-	return getAllBooks(req, res);
+	return res.sendStatus(200);
+	// return getAllBooks(req, res);
 })
 
 // we only add a cover to the book
