@@ -37,28 +37,37 @@
 				</div>
 			</div>
 
-			<h3 @click="showForm = ! showForm" style="cursor: pointer;">
-				<i v-if="showForm" class="fas fa-minus-circle"></i>
-				<i v-else class="fas fa-plus-circle"></i>
-				Ajouter une revue
-			</h3>
 
-			<form v-if="showForm" v-on:submit.prevent="addReview" method="post">
+			<div class="addwrapper">
 
-				<label for="rating">Note</label>
-				<i :class="rating > 0 ? 'fas fa-star' : 'far fa-star'" @click="rating = 1"></i>
-				<i :class="rating > 1 ? 'fas fa-star' : 'far fa-star'" @click="rating = 2"></i>
-				<i :class="rating > 2 ? 'fas fa-star' : 'far fa-star'" @click="rating = 3"></i>
-				<i :class="rating > 3 ? 'fas fa-star' : 'far fa-star'" @click="rating = 4"></i>
-				<i :class="rating > 4 ? 'fas fa-star' : 'far fa-star'" @click="rating = 5"></i>
-				<br>
+				<h3 @click="showForm = ! showForm" style="cursor: pointer;">
+					<i v-if="showForm" class="fas fa-minus-circle"></i>
+					<span v-else>
+						<i v-if="hasReview" class="fas fa-pen-square"></i>
+						<i v-else class="fas fa-plus-circle"></i>
+					</span>
+					<span v-if="hasReview">Modifier ma revue</span>
+					<span v-else>Ajouter une revue</span>
+				</h3>
 
-				<div id="newReview" style="margin-left:125px;" v-if="newReview" v-html="$md.render(newReview)"></div>
-				<label for="review">Commentaire</label>
-				<textarea name="review" style="width: 400px; height: 300px;" v-model="newReview"></textarea><br>
-				
-				<label></label> <button type="submit">Enregistrer</button>
-			</form>
+				<form v-if="showForm" v-on:submit.prevent="addReview" method="post">
+
+					<label for="rating">Note</label>
+					<i :class="rating > 0 ? 'fas fa-star' : 'far fa-star'" @click="rating = 1"></i>
+					<i :class="rating > 1 ? 'fas fa-star' : 'far fa-star'" @click="rating = 2"></i>
+					<i :class="rating > 2 ? 'fas fa-star' : 'far fa-star'" @click="rating = 3"></i>
+					<i :class="rating > 3 ? 'fas fa-star' : 'far fa-star'" @click="rating = 4"></i>
+					<i :class="rating > 4 ? 'fas fa-star' : 'far fa-star'" @click="rating = 5"></i>
+					<br>
+
+					<div id="newReview" style="margin-left:125px;" v-if="newReview" v-html="$md.render(newReview)"></div>
+					<label for="review">Commentaire</label>
+					<textarea name="review" style="width: 400px; height: 300px;" v-model="newReview"></textarea><br>
+					
+					<label></label> <button type="submit">Enregistrer</button>
+				</form>
+
+			</div>
 
 		</client-only>
 
@@ -78,7 +87,9 @@ export default {
 			rating: 0,
 			newReview: '',
 			options: ['BD', 'SF', 'Polar'],
-			couv: undefined
+			couv: undefined,
+			mid: undefined,
+			hasReview: false,
 		}
 	},
 
@@ -89,6 +100,7 @@ export default {
 			let {data} = await this.$axios.get('/api/book?id=' + bid);
 			if (data.rows.length) {
 				this.row = data.rows[0];
+				this.mid = data.mid;
 				document.title = document.title.split('/')[0] + " / " + this.row.title;
 			}
 			if (data.tags.length) {
@@ -103,9 +115,10 @@ export default {
 			if (data.rows.length) {
 				this.reviews = data.rows;
 				for (const i in this.reviews) {
-					if (this.reviews[i].did == this.$auth.user.id) {
+					if (this.reviews[i].mid == this.mid) {
 						this.rating    = this.reviews[i].rating;
 						this.newReview = this.reviews[i].comment;
+						this.hasReview = true;
 					}
 				}
 			}
@@ -142,8 +155,8 @@ export default {
 		}
 	},
 
-	mounted: function() {
-		this.getBook();
+	mounted: async function() {
+		await this.getBook();
 		this.getReviews();
 	}
 }

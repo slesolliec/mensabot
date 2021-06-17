@@ -11,6 +11,57 @@
 				</nuxt-link></li>
 			</ul>
 
+			<div class="addwrapper">
+
+				<h3 @click="showHideForm" style="cursor: pointer;">
+					<i v-if="showForm" class="fas fa-minus-circle"></i>
+					<i v-else class="fas fa-plus-circle"></i>
+					Ajouter un livre
+				</h3>
+
+				<form v-if="showForm" v-on:submit.prevent="addReview" method="post" enctype="multipart/form-data">
+
+					<label for="couverture">Couverture</label>
+					<input type="file" name="couverture" id="couv" ref="couv" @change="handleCouv" /><br>
+
+					<label for="title">Titre</label>
+					<input name="title" v-model="newTitle" style="width: 400px;"><br>
+
+					<label for="auteurs">Auteurs</label>
+					<input name="auteurs" v-model="newAuthors" style="width: 400px;"><br>
+
+					<label for="year">Année de parution</label>
+					<input name="year" v-model="newYear"><br>
+
+					<label for="tags">Tags</label>
+					<multiselect v-model="tags" :options="options"
+						:multiple="true"
+						:close-on-select="false"
+						:clear-on-select="false"
+						:taggable="true"
+						:tag-placeholder="'Ajouter ce nouveau tag'"
+						:placeholder="'Choisir un tag'"
+						@tag="addTag"></multiselect><br>
+
+
+					<label for="rating">Note</label>
+					<i :class="rating > 0 ? 'fas fa-star' : 'far fa-star'" @click="rating = 1"></i>
+					<i :class="rating > 1 ? 'fas fa-star' : 'far fa-star'" @click="rating = 2"></i>
+					<i :class="rating > 2 ? 'fas fa-star' : 'far fa-star'" @click="rating = 3"></i>
+					<i :class="rating > 3 ? 'fas fa-star' : 'far fa-star'" @click="rating = 4"></i>
+					<i :class="rating > 4 ? 'fas fa-star' : 'far fa-star'" @click="rating = 5"></i>
+					<br>
+
+					<div id="newReview" style="margin-left:125px;" v-if="newReview" v-html="$md.render(newReview)"></div>
+					<label for="review">Commentaire</label>
+					<textarea name="review" style="width: 400px; height: 300px;" v-model="newReview"></textarea><br>
+					
+					<label></label> <button type="submit">Enregistrer</button>
+				</form>
+
+			</div>
+
+
 			<div class="bookwrapper" v-for="row in rows" :key="row.id">
 				<div class="cover"><img v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="80" height="130"></div>
 				<div class="book">
@@ -35,54 +86,7 @@
 				</div>
 			</div>
 
-			<h3 @click="showHideForm" style="cursor: pointer;">
-				<i v-if="showForm" class="fas fa-minus-circle"></i>
-				<i v-else class="fas fa-plus-circle"></i>
-				Ajouter un livre
-			</h3>
-
-			<form v-if="showForm" v-on:submit.prevent="addReview" method="post" enctype="multipart/form-data">
-
-				<label for="couverture">Couverture</label>
-				<input type="file" name="couverture" id="couv" ref="couv" @change="handleCouv" /><br>
-
-				<label for="title">Titre</label>
-				<input name="title" v-model="newTitle" style="width: 400px;"><br>
-
-				<label for="auteurs">Auteurs</label>
-				<input name="auteurs" v-model="newAuthors" style="width: 400px;"><br>
-
-				<label for="year">Année de parution</label>
-				<input name="year" v-model="newYear"><br>
-
-				<label for="tags">Tags</label>
-				<multiselect v-model="tags" :options="options"
-					:multiple="true"
-					:close-on-select="false"
-					:clear-on-select="false"
-					:taggable="true"
-					:tag-placeholder="'Ajouter ce nouveau tag'"
-					:placeholder="'Choisir un tag'"
-					@tag="addTag"></multiselect><br>
-
-
-				<label for="rating">Note</label>
-				<i :class="rating > 0 ? 'fas fa-star' : 'far fa-star'" @click="rating = 1"></i>
-				<i :class="rating > 1 ? 'fas fa-star' : 'far fa-star'" @click="rating = 2"></i>
-				<i :class="rating > 2 ? 'fas fa-star' : 'far fa-star'" @click="rating = 3"></i>
-				<i :class="rating > 3 ? 'fas fa-star' : 'far fa-star'" @click="rating = 4"></i>
-				<i :class="rating > 4 ? 'fas fa-star' : 'far fa-star'" @click="rating = 5"></i>
-				<br>
-
-				<div id="newReview" style="margin-left:125px;" v-if="newReview" v-html="$md.render(newReview)"></div>
-				<label for="review">Commentaire</label>
-				<textarea name="review" style="width: 400px; height: 300px;" v-model="newReview"></textarea><br>
-				
-				<label></label> <button type="submit">Enregistrer</button>
-			</form>
-
 		</client-only>
-
 
 	</div>
 </template>
@@ -174,6 +178,19 @@ label {
 form i.fa-star {
 	cursor: pointer;
 }
+
+div.addwrapper {
+  	margin:  8px 0;
+	padding: 10px 10px 8px 10px;
+	border: 1px solid #CCC;
+	background: linear-gradient(135deg, rgb(118, 209, 168), #CCC, #CCC);
+	box-shadow: inset 1px 1px 3px #666666;
+}
+
+div.addwrapper h3 {
+	margin-top: 0;
+}
+
 
 div.bookwrapper {
 	display: grid;

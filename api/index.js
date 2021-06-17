@@ -60,10 +60,10 @@ async function checkAccess(req, res, next) {
 
 	// console.log(req.cookies);
 	if (req.cookies['auth.strategy'] != 'discord') {
-		return res.sendStatus(401).send("You don't have the right cookie");
+		return res.sendStatus(401).send("You don't have the right strategy cookie");
 	}
 	if (! req.cookies['auth._token.discord']) {
-		return res.sendStatus(401).send("You don't have the left cookie");
+		return res.sendStatus(401).send("You don't have the discord token");
 	}
 
 	const discordToken = req.cookies['auth._token.discord'].split(' ')[1];
@@ -229,6 +229,7 @@ async function isGuildAdmin(gid, did) {
 }
 
 
+// admin action: changing status of a user
 app.post('/userchange', upload.none(), async (req, res) => {
 	if ( ! isGuildAdmin(req.body.gid, user.did))
 		return res.sendStatus(403);
@@ -303,6 +304,7 @@ app.get('/guild', async (req, res) => {
 })
 
 
+// update one's presentation
 app.post('/me', upload.none(), async (req, res) => {
 	// console.log(req.body.tags);
 	let update = await db.query('update users set presentation = ? where mid = ?', [req.body.presentation, user.mid])
@@ -366,6 +368,9 @@ async function getAllBooks(req, res) {
 		responseData.tags = tags;
 	}
 
+	// add the user mid
+	responseData.mid = user.mid;
+
 	return res.json(responseData);
 }
 
@@ -381,7 +386,8 @@ app.get('/book', async (req, res) => {
 			books[0].mine = true;
 		}
 		const tags = await db.query('select tag from tags where book_id = ?', [bid]);
-		return res.json({rows: books, tags: tags});
+
+		return res.json({rows: books, tags: tags, mid: user.mid});
 	}
 
 	if (req.query.best) {
@@ -407,12 +413,13 @@ app.get('/book', async (req, res) => {
 				order by reviews.created_at desc`, [books[i].id]);
 		}
 
-		return res.json({rows: books});
+		return res.json({rows: books, mid: user.mid});
 	}
 
 	// default
 	return getAllBooks(req, res);
 });
+
 
 async function getReviewsForBook(req, res) {
 	let bid;
