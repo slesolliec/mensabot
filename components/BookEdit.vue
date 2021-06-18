@@ -1,5 +1,5 @@
 <template>
-	<div class="addwrapper">
+	<div class="editwrapper">
 
 		<h3 @click="showHideForm" style="cursor: pointer;">
 			<i v-if="showForm" class="fas fa-minus-circle"></i>

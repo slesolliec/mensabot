@@ -38,7 +38,7 @@
 			</div>
 
 
-			<div class="addwrapper">
+			<div class="editwrapper">
 
 				<h3 @click="showForm = ! showForm" style="cursor: pointer;">
 					<i v-if="showForm" class="fas fa-minus-circle"></i>

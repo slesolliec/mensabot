@@ -83,7 +83,7 @@ label {
 
 }
 
-div.addwrapper {
+div.editwrapper {
   	margin:  8px 0;
 	padding: 10px 10px 8px 10px;
 	border: 1px solid #CCC;
@@ -91,7 +91,7 @@ div.addwrapper {
 	box-shadow: inset 1px 1px 3px #666666;
 }
 
-div.addwrapper h3 {
+div.editwrapper h3 {
 	margin-top: 0;
 }
 

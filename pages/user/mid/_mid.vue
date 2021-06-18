@@ -19,24 +19,33 @@
 
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
-			<form v-if="row.did == $auth.user.id" v-on:submit.prevent="present" method="post" style="margin-top:40px;">
-				<p>
-					Et si vous vous présentiez ? <em>(écrivez en <a href="https://fr.wikipedia.org/wiki/Markdown#Quelques_exemples">MarkDown</a>)</em>
+			<div class="editwrapper">
+				<h3 @click="showHideForm" style="cursor: pointer;">
+					<i v-if="showForm" class="fas fa-minus-circle"></i>
+					<i v-else class="fas fa-plus-circle"></i>
+					Rédiger ma présentation
+				</h3>
 
-				</p>
-				<textarea style="width: 400px; height: 400px;" v-model="row.presentation"></textarea><br>
-				<h4>Etiquettes</h4>				
-				<multiselect v-model="row.tags" :options="options"
-					:multiple="true"
-					:close-on-select="false"
-					:clear-on-select="false"
-					:taggable="true"
-					:tag-placeholder="'Ajouter ce nouveau tag'"
-					:placeholder="'Choisir un tag'"
-					@tag="addTag"></multiselect><br>
-				
-				<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
-			</form>
+				<form v-if="(row.did == $auth.user.id) && showForm" v-on:submit.prevent="present" method="post">
+
+					<p>
+						Et si vous vous présentiez ? <em>(écrivez en <a href="https://fr.wikipedia.org/wiki/Markdown#Quelques_exemples">MarkDown</a>)</em>
+
+					</p>
+					<textarea style="width: 100%; height: 400px;" v-model="row.presentation"></textarea><br>
+					<h4>Etiquettes</h4>				
+					<multiselect v-model="row.tags" :options="options"
+						:multiple="true"
+						:close-on-select="false"
+						:clear-on-select="false"
+						:taggable="true"
+						:tag-placeholder="'Ajouter ce nouveau tag'"
+						:placeholder="'Choisir un tag'"
+						@tag="addTag"></multiselect><br>
+					
+					<button type="submit">Enregistrer</button>  &lt;-- n'oubliez pas de cliquer
+				</form>
+			</div>
 
 
 
@@ -52,12 +61,15 @@ export default {
 
 	data() {
 		return {
+			showForm: true,
 			row: {},
 			options: ['TDA', 'TDAH', 'TSA']
 		}
 	},
 
 	methods: {
+
+		showHideForm: function () {this.showForm = ! this.showForm},
 		
 		getRow: async function () {
 			const mid = this.$route.params.mid.split(' ')[0];
