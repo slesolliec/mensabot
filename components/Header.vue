@@ -89,6 +89,14 @@ header {
 	box-shadow: inset 1px 1px 6px black;
 }
 
+/*
+header {
+	background: url(/header_001.jpg) 50%;
+	background-position: 0px -160px;
+	background-size: 120%;
+}
+*/
+
 #me {
 	position: absolute;
 	top: -10px;

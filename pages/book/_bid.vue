@@ -3,10 +3,10 @@
 
 		<client-only>
 
-			<img class="cover" v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="110" height="180">
+			<img class="cover" v-if="book.cover_ext" :src="'/book_cover/' + book.id + '.' + book.cover_ext" width="110" height="180">
 			<div v-else>
-				<form id="addCover" v-if="row.mine" v-on:submit.prevent="addCover" method="post" enctype="multipart/form-data">
-					<p>Il n'y a pas de couverture pour ce livre. Pouvez-vous <a :href="'https://www.qwant.com/?q=' + row.title.split(' ').join('+') + '+' + row.authors.split(' ').join('+') + '+book+cover&t=images'">la chercher</a>, puis l'uploader via ce formulaire ?<br>
+				<form id="addCover" v-if="book.mine" v-on:submit.prevent="addCover" method="post" enctype="multipart/form-data">
+					<p>Il n'y a pas de couverture pour ce livre. Pouvez-vous <a :href="'https://www.qwant.com/?q=' + book.title.split(' ').join('+') + '+' + book.authors.split(' ').join('+') + '+book+cover&t=images'">la chercher</a>, puis l'uploader via ce formulaire ?<br>
 						<em>Essayez de ne pas choisir une image trop grosse (supérieure à 500 pixels).</em>
 					</p>
 					<label for="couverture">Couverture</label>
@@ -16,15 +16,17 @@
 			</div>
 
 
-			<h2>{{ row.title }}</h2>
+			<h2>{{ book.title }}</h2>
 
-			<div class="authors">{{ row.authors }}</div>
-			<div class="year">{{ row.year }}</div>
+			<div class="authors">{{ book.authors }}</div>
+			<div class="year">{{ book.year }}</div>
 
-			<ul class="tags"><li v-for="tag in row.tags" :key="tag"><nuxt-link :to="'/tag/' + tag.tag">{{tag.tag}}</nuxt-link></li></ul>
+			<ul class="tags"><li v-for="tag in book.tags" :key="tag"><nuxt-link :to="'/tag/' + tag">{{tag}}</nuxt-link></li></ul>
+
+			<!-- BookEdit :book="row" / -->
 
 			<div class="reviews">
-				<div v-for="rev in reviews" class="review">
+				<div v-for="rev in reviews" class="review" :key="rev.mid">
 					<div v-if="rev.comment" v-html="$md.render(rev.comment)"></div>
 
 					<i :class="rev.rating > 0 ? 'fas fa-star' : 'far fa-star'"></i><i
@@ -81,7 +83,7 @@ export default {
 
 	data() {
 		return {
-			row: {},
+			book: {},
 			reviews: [],
 			showForm: false,
 			rating: 0,
@@ -98,13 +100,10 @@ export default {
 		getBook: async function () {
 			const bid = this.$route.params.bid.split(' ')[0];
 			let {data} = await this.$axios.get('/api/book?id=' + bid);
-			if (data.rows.length) {
-				this.row = data.rows[0];
+			if (data.books.length) {
+				this.book = data.books[0];
 				this.mid = data.mid;
-				document.title = document.title.split('/')[0] + " / " + this.row.title;
-			}
-			if (data.tags.length) {
-				this.row.tags = data.tags;
+				document.title = document.title.split('/')[0] + " / " + this.book.title;
 			}
 		},
 		
@@ -128,7 +127,7 @@ export default {
 			const bodyFormData = new FormData();
 			bodyFormData.append('rating',  this.rating);
 			bodyFormData.append('review',  this.newReview);
-			bodyFormData.append('id',      this.row.id);
+			bodyFormData.append('id',      this.book.id);
 			let {data} = await this.$axios.post('/api/book', bodyFormData);
 			// reset book desc
 			this.reviews = data.rows;
@@ -144,7 +143,7 @@ export default {
 
 		addCover: async function() {
 			const bodyFormData = new FormData();
-			bodyFormData.append('id',      this.row.id);
+			bodyFormData.append('id',      this.book.id);
 			bodyFormData.append('couv',    this.couv);
 			let {data} = await this.$axios.post('/api/book-update', bodyFormData);
 			this.row = data.rows[0];

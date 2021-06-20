@@ -326,68 +326,16 @@ app.post('/me', upload.none(), async (req, res) => {
 })
 
 
-async function getAllBooks(req, res) {
-	let books;
-	if (req.query.tag) {
-		const sql = `
-			select books.*
-			from books, tags
-			where books.id = tags.book_id
-			  and tags.tag = ?
-			order by id desc`;
-		books = await db.query(sql, [req.query.tag]);
-	} else {
-		const sql = `select * from books order by id desc`;
-		books = await db.query(sql);
-	}
-
-	for (const i in books) {
-		// get reviews
-		books[i].reviews = await db.query(`
-			select reviews.rating,
-				users.mid,
-				users.real_name
-			from reviews, users
-			where reviews.book_id = ?
-			  and reviews.mid = users.mid`, [books[i].id]);
-		// get tags
-		books[i].tags = await db.query("select tag from tags where book_id = ?", books[i].id);
-	}
-	
-	const responseData = {};
-	responseData.rows = books;
-
-	// get all tags
-	if (! req.query.tag) {
-		let tags = await db.query(`
-			select tag, count(*) as nb
-			from tags
-			where book_id is not null
-			group by tag
-			order by nb desc, tag asc`);
-		responseData.tags = tags;
-	}
-
-	// add the user mid
-	responseData.mid = user.mid;
-
-	return res.json(responseData);
-}
-
 app.get('/book', async (req, res) => {
+
+	let books = null;
+
 	if (req.query.id) {
 		const bid  = parseInt(req.query.id);
-		const books = await db.query('select * from books where id = ?', [bid]);
+		books = await db.query('select * from books where id = ?', [bid]);
 		if (! books.length) {
 			return res.status(404).send("No book found with id=" + req.query.id);
 		}
-		// is it my book?
-		if (user.mid == books[0].mid || user.mid == 11248) {
-			books[0].mine = true;
-		}
-		const tags = await db.query('select tag from tags where book_id = ?', [bid]);
-
-		return res.json({rows: books, tags: tags, mid: user.mid});
 	}
 
 	if (req.query.best) {
@@ -399,26 +347,65 @@ app.get('/book', async (req, res) => {
 			order by stars desc
 			limit 5
 			`;
-		const books = await db.query(sql, []);
-
-		for (const i in books) {
-			// get reviews
-			books[i].reviews = await db.query(`
-				select reviews.rating,
-					users.mid,
-					users.real_name
-				from reviews, users
-				where reviews.book_id = ?
-				  and reviews.mid = users.mid
-				order by reviews.created_at desc`, [books[i].id]);
-		}
-
-		return res.json({rows: books, mid: user.mid});
+		books = await db.query(sql, []);
 	}
 
-	// default
-	return getAllBooks(req, res);
+	if (req.query.tag) {
+		const sql = `
+			select books.*
+			from books, tags
+			where books.id = tags.book_id
+			  and tags.tag = ?
+			order by id desc`;
+		books = await db.query(sql, [req.query.tag]);
+	}
+	
+	if (req.query.mid) {
+		const mid = parseInt(req.query.mid);
+		const sql = `
+			select books.*
+			from books, reviews
+			where books.id = reviews.book_id
+			  and reviews.mid = ?
+			order by id desc`;
+		books = await db.query(sql, [mid]);
+	}
+	
+	if (req.query.all) {
+		const sql = `select * from books order by id desc`;
+		books = await db.query(sql);
+	}
+
+	books = await booksAddReviewsAndTags(books);
+
+	return res.json({books: books, mid: user.mid});
 });
+
+
+async function booksAddReviewsAndTags(books) {
+	for (const i in books) {
+		// get reviews
+		books[i].reviews = await db.query(`
+			select reviews.rating,
+				users.mid,
+				users.real_name
+			from reviews, users
+			where reviews.book_id = ?
+				and reviews.mid = users.mid
+			order by reviews.created_at desc`, [books[i].id]);
+
+		// get tags
+		const zetags = await db.query('select tag from tags where book_id = ?', [books[i].id]);
+		let tags = [];
+		for (const i in zetags) {
+			tags.push(zetags[i].tag);
+		}
+		books[i].tags = tags;
+	}
+	return books;
+}
+
+
 
 
 async function getReviewsForBook(req, res) {

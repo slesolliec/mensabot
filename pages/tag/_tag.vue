@@ -29,31 +29,7 @@
 				</tbody>
 			</table>
 
-			<div v-if="books.length">
-				<div class="bookwrapper" v-for="row in books" :key="row.id">
-					<div class="cover"><img v-if="row.cover_ext" :src="'/book_cover/' + row.id + '.' + row.cover_ext" width="80" height="130"></div>
-					<div class="book">
-						<nuxt-link :to="'/book/' + row.id">{{ row.title }}</nuxt-link><br>
-						{{ row.authors }}<br>
-						<span v-if="row.year">{{ row.year }}<br></span>
-					</div>
-					<div class="reviews">
-						<div v-for="rev in row.reviews">
-							<i :class="rev.rating > 0 ? 'fas fa-star' : 'far fa-star'"></i><i
-								:class="rev.rating > 1 ? 'fas fa-star' : 'far fa-star'"></i><i
-								:class="rev.rating > 2 ? 'fas fa-star' : 'far fa-star'"></i><i
-								:class="rev.rating > 3 ? 'fas fa-star' : 'far fa-star'"></i><i
-								:class="rev.rating > 4 ? 'fas fa-star' : 'far fa-star'"></i>
-							par <nuxt-link :to="'/user/mid/' + rev.mid">{{ rev.real_name }}</nuxt-link>
-						</div>
-					</div>
-					<div class="tags">
-						<ul class="tags">
-							<li v-for="tag in row.tags" :key="tag.tag"><nuxt-link :to="'/tag/' + tag.tag">{{tag.tag}}</nuxt-link></li>
-						</ul>
-					</div>
-				</div>
-			</div>
+			<BookView v-for="book in books" :book="book" :key="book.id" />
 
 		</client-only>
 
@@ -61,6 +37,7 @@
 </template>
 
 <script>
+import BookView from '../../components/BookView.vue';
 
 
 export default {
@@ -84,9 +61,9 @@ export default {
 
 		getBooks: async function() {
 			let {data} = await this.$axios.get('/api/book?tag=' + this.tag);
-			this.books = data.rows;
+			this.books = data.books;
 		}
-},
+	},
 
 	mounted: function() {
 		this.getRows();

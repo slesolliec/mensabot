@@ -47,7 +47,8 @@
 				</form>
 			</div>
 
-
+			<h3 v-if="books.length">Livres</h3>
+			<BookView v-for="book in books" :book="book" :key="book.id" />
 
 		</client-only>
 
@@ -63,7 +64,8 @@ export default {
 		return {
 			showForm: true,
 			row: {},
-			options: ['TDA', 'TDAH', 'TSA']
+			options: ['TDA', 'TDAH', 'TSA'],
+			books: []
 		}
 	},
 
@@ -78,6 +80,12 @@ export default {
 				this.row = data.rows[0];
 				document.title = document.title.split('/')[0] + " / " + this.row.real_name;
 			}
+		},
+
+		getBooks: async function() {
+			const mid = this.$route.params.mid.split(' ')[0];
+			let {data} = await this.$axios.get('/api/book?mid=' + mid);
+			this.books = data.books;
 		},
 
 		present: async function() {
@@ -96,6 +104,7 @@ export default {
 
 	mounted: function() {
 		this.getRow();
+		this.getBooks();
 	}
 }
 
