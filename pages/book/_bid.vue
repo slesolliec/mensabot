@@ -4,17 +4,6 @@
 		<client-only>
 
 			<img class="cover" v-if="book.cover_ext" :src="'/book_cover/' + book.id + '.' + book.cover_ext" width="110" height="180">
-			<div v-else>
-				<form id="addCover" v-if="book.mine" v-on:submit.prevent="addCover" method="post" enctype="multipart/form-data">
-					<p>Il n'y a pas de couverture pour ce livre. Pouvez-vous <a :href="'https://www.qwant.com/?q=' + book.title.split(' ').join('+') + '+' + book.authors.split(' ').join('+') + '+book+cover&t=images'">la chercher</a>, puis l'uploader via ce formulaire ?<br>
-						<em>Essayez de ne pas choisir une image trop grosse (supérieure à 500 pixels).</em>
-					</p>
-					<label for="couverture">Couverture</label>
-					<input type="file" name="couverture" id="couv" ref="couv" @change="handleCouv" /><br>
-					<label></label> <button type="submit">Enregistrer</button>
-				</form>
-			</div>
-
 
 			<h2>{{ book.title }}</h2>
 
@@ -23,7 +12,7 @@
 
 			<ul class="tags"><li v-for="tag in book.tags" :key="tag"><nuxt-link :to="'/tag/' + tag">{{tag}}</nuxt-link></li></ul>
 
-			<!-- BookEdit :book="row" / -->
+			<BookEdit v-if="book.id" :book="book" @bookadded="reloadContent" />
 
 			<div class="reviews">
 				<div v-for="rev in reviews" class="review" :key="rev.mid">
@@ -83,7 +72,7 @@ export default {
 
 	data() {
 		return {
-			book: {},
+			book: {title: '', authors: ''},
 			reviews: [],
 			showForm: false,
 			rating: 0,
@@ -141,16 +130,9 @@ export default {
 			}
 		},
 
-		addCover: async function() {
-			const bodyFormData = new FormData();
-			bodyFormData.append('id',      this.book.id);
-			bodyFormData.append('couv',    this.couv);
-			let {data} = await this.$axios.post('/api/book-update', bodyFormData);
-			this.row = data.rows[0];
-		},
-
-		handleCouv () {
-			this.couv = this.$refs.couv.files[0];
+		reloadContent: async function() {
+			await this.getBook();
+			this.getReviews();
 		}
 	},
 

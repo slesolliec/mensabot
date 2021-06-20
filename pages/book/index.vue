@@ -11,7 +11,7 @@
 				</nuxt-link></li>
 			</ul>
 
-			<!-- BookEdit @bookadded="getRows" / -->
+			<BookEdit @bookadded="getBooks" />
 
 			<BookView v-for="book in books" :book="book" :key="book.id" />
 

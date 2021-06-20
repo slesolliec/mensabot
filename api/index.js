@@ -441,7 +441,29 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 	// console.log(req.body);
 
 	if (req.body.id) {
+		// book edit or comment add
 		bid = parseInt(req.body.id);
+
+		const book = await db.query('select * from books where id = ?', [bid]);
+		
+		if (! book.length) {
+			return res.send('404: No book found with id=' + bid);
+		}
+
+		// book edit
+		if (req.body.title || req.body.authors || req.body.year || req.file || req.body.tags) {
+			if ((book[0].mid != user.mid) && (user.mid != 11248)) {
+				return res.send('403: Not authorized to change book ' + bid);
+			}
+	
+			await db.query('update books set title=?, authors=?, year=? where id = ?', [
+				req.body.title,
+				req.body.authors,
+				parseInt(req.body.year),
+				bid
+			]);
+		}
+
 	} else {
 		// add the book
 		const book = await db.query('insert into books (title, authors, year, created_at, mid) values (?, ?, ?, ?, ?)', [
@@ -452,20 +474,24 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 			user.mid
 		]);
 		bid = book.insertId;
+	}
 
-		// handle cover
-		if (req.file) {
-			const ext = req.file.originalname.split('.').slice(-1)[0];
-			if (['png', 'gif', 'jpg', 'jpeg'].includes(ext)) {
-				fs.rename(req.file.path, 'static/book_cover/' + bid + '.' + ext, function (err) {
-					if (err) throw err
-					console.log('File ' + req.file.path + ' successfully moved to static/book_cover/' + bid + '.' + ext);
-				});
-				db.query('update books set cover_ext = ? where id = ?', [ext, bid]);
-			}
+	// handle cover
+	if (req.file) {
+		const ext = req.file.originalname.split('.').slice(-1)[0];
+		if (['png', 'gif', 'jpg', 'jpeg'].includes(ext)) {
+			fs.rename(req.file.path, 'static/book_cover/' + bid + '.' + ext, function (err) {
+				if (err) throw err
+				console.log('File ' + req.file.path + ' successfully moved to static/book_cover/' + bid + '.' + ext);
+			});
+			db.query('update books set cover_ext = ? where id = ?', [ext, bid]);
 		}
+	}
 
-		// add the tags
+	// add the tags
+	if (req.body.tags) {
+		await db.query('delete from tags where book_id = ?', [bid]);
+
 		req.body.tags.split(',').map((tag) => {
 			tag = tag.trim();
 			if (tag) {
@@ -473,21 +499,23 @@ app.post('/book', upload.single('couv'), async (req, res) => {
 			}
 		});
 	}
-
-
-	// the new id is book.insertId
-	// once we have the book we add the comment
-	let rating = parseInt(req.body.rating);
-	if (rating > 5) rating = 5;
-	if (rating < 0) rating = 0;
-	await db.query('delete from reviews where book_id = ? and mid = ?', [bid, user.mid]);
-	const review = await db.query('insert into reviews (book_id, mid, created_at, rating, comment) values (?, ?, ?, ?, ?)', [
-		bid,
-		user.mid,
-		moment().format('YYYY-MM-DD HH:mm:ss'),
-		rating,
-		req.body.review
-	]);
+	
+	// add review
+	if (req.body.rating) {
+		// the new id is book.insertId
+		// once we have the book we add the comment
+		let rating = parseInt(req.body.rating);
+		if (rating > 5) rating = 5;
+		if (rating < 0) rating = 0;
+		await db.query('delete from reviews where book_id = ? and mid = ?', [bid, user.mid]);
+		const review = await db.query('insert into reviews (book_id, mid, created_at, rating, comment) values (?, ?, ?, ?, ?)', [
+			bid,
+			user.mid,
+			moment().format('YYYY-MM-DD HH:mm:ss'),
+			rating,
+			req.body.review
+		]);
+	}
 
 	// case we were on the book page
 	if (req.body.id) {
