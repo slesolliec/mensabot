@@ -19,19 +19,19 @@
 
 			<div id="presentation" v-if="row.presentation" v-html="$md.render(row.presentation)"></div>
 
-			<div class="editwrapper">
+			<div class="editwrapper" v-if="(row.did == $auth.user.id)">
+
 				<h3 @click="showHideForm" style="cursor: pointer;">
 					<i v-if="showForm" class="fas fa-minus-circle"></i>
 					<i v-else class="fas fa-plus-circle"></i>
 					Rédiger ma présentation
 				</h3>
 
-				<form v-if="(row.did == $auth.user.id) && showForm" v-on:submit.prevent="present" method="post">
-
+				<form v-if="showForm" v-on:submit.prevent="present" method="post">
 					<p>
 						Et si vous vous présentiez ? <em>(écrivez en <a href="https://fr.wikipedia.org/wiki/Markdown#Quelques_exemples">MarkDown</a>)</em>
-
 					</p>
+					
 					<textarea style="width: 100%; height: 400px;" v-model="row.presentation"></textarea><br>
 					<h4>Etiquettes</h4>				
 					<multiselect v-model="row.tags" :options="options"
