@@ -55,7 +55,7 @@ export default {
 		getRows: async function () {
 			this.tag = this.$route.params.tag.split(' ')[0];
 			let {data} = await this.$axios.get('/api/tag?tag=' + this.tag);
-			this.rows = data.rows;
+			this.rows = data.tags;
 			document.title = document.title.split('/')[0] + " / Tag / " + this.tag;
 		},
 

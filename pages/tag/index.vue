@@ -26,7 +26,7 @@ export default {
 		
 		getRows: async function () {
 			let {data} = await this.$axios.get('/api/tag?all=true');
-			this.rows = data.rows;
+			this.rows = data.tags;
 		}
 	},
 
