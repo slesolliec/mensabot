@@ -197,4 +197,19 @@ nav {
 }
 
 
+div.editwrapper {
+	clear: left;
+  	margin:  8px 0;
+	padding: 10px 10px 8px 10px;
+	border: 1px solid #CCC;
+	background: linear-gradient(135deg, rgb(118, 209, 168), #CCC, #CCC);
+	box-shadow: inset 1px 1px 3px #666666;
+}
+
+div.editwrapper h3 {
+	margin-top: 0;
+}
+
+
+
 </style>
