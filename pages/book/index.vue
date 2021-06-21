@@ -11,7 +11,7 @@
 				</nuxt-link></li>
 			</ul>
 
-			<BookEdit @bookadded="getBooks" />
+			<BookEdit @bookadded="loadData" />
 
 			<BookView v-for="book in books" :book="book" :key="book.id" />
 
@@ -31,18 +31,26 @@ export default {
 	},
 
 	methods: {
-		getBooks: async function () {
+		getBooks: async function() {
 			let {data} = await this.$axios.get('/api/book?all=true');
 			this.books = data.books;
-			this.tags  = data.tags;
 			document.title = document.title.split('/')[0] + " / Livres";
 		},
 
+		getTags: async function() {
+			let {data} = await this.$axios.get('/api/tag?books=true');
+			this.tags  = data.tags;
+		},
+
+		loadData: function() {
+			this.getBooks();
+			this.getTags();
+		}
 	},
 
 	mounted: function() {
-		this.getBooks();
-	}
+		this.loadData();
+	},
 
 }
 

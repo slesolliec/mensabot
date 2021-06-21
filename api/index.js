@@ -256,6 +256,7 @@ app.get('/region', async (req, res) => {
 app.get('/tag', async (req, res) => {
 
 	const responseData = {};
+	let   rows = undefined;
 
 	if (req.query.tag) {
 		// list all users with that tag
@@ -270,20 +271,31 @@ app.get('/tag', async (req, res) => {
 		 )
 		order by real_name, discord_name`;
 
-		// console.log(sql);
-		const users = await db.query(sql, [req.query.tag]);
+		rows = await db.query(sql, [req.query.tag]);
+	}
 	
-		responseData.rows = users;
-	} else {
+	if (req.query.all) {
 		// list all tags
-		const rows = await db.query(`
+		rows = await db.query(`
 			select tag, count(*) as nb
 			from tags
 			group by tag
 			order by nb desc, tag asc`
 		);
-		responseData.rows = rows;
 	}
+
+	if (req.query.books) {
+		// list all tags attached to books
+		rows = await db.query(`
+			select tag, count(*) as nb
+			from tags
+			where book_id is not null
+			group by tag
+			order by nb desc, tag asc`
+		);
+	}
+	
+	responseData.tags = rows;
 	res.json(responseData);
 })
 
