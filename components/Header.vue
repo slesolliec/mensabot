@@ -12,10 +12,11 @@
 
 		<h1>
 			<NuxtLink to="/">Mensa.cafe</NuxtLink><br>
-			<em>&nbsp;&nbsp;version 0.3.2 beta</em>
+			<em>&nbsp;&nbsp;version 0.4.0 beta</em>
 		</h1>
 
 
+		<!-- table id="statistics" v-if="$auth.user" -->
 		<table id="statistics">
 			<tbody>
 				<tr><td style="text-align:right;">{{ stats.members }}</td><td>membres</td></tr>
@@ -29,6 +30,7 @@
 			<NuxtLink to="/"><i class="fas fa-home"></i></NuxtLink>
 			<NuxtLink to="/user">Utilisateurs</NuxtLink>
 			<NuxtLink to="/region">Régions</NuxtLink>
+			<NuxtLink to="/departement">Départements</NuxtLink>
 			<NuxtLink to="/guild">Serveurs</NuxtLink>
 			<NuxtLink to="/book">Livres</NuxtLink>
 			<NuxtLink to="/tag">Tags</NuxtLink>
@@ -91,9 +93,9 @@ header {
 
 /*
 header {
-	background: url(/header_001.jpg) 50%;
-	background-position: 0px -160px;
-	background-size: 120%;
+	background: url(/header_005.jpg);
+	background-position: 0px -26px;
+	background-size: 100%;
 }
 */
 
@@ -190,16 +192,16 @@ nav {
 }
 
 #statistics {
-	position: absolute; top: 20px; left: 500px;
+	position: absolute; top: 10px; left: 550px;
 	font-size: 12px;
+	border-spacing: 0;
 	opacity: 0.8;
-
 }
 
 
 div.editwrapper {
 	clear: left;
-  	margin:  8px 0;
+	margin:  8px 0;
 	padding: 10px 10px 8px 10px;
 	border: 1px solid #CCC;
 	background: linear-gradient(135deg, rgb(118, 209, 168), #CCC, #CCC);
@@ -209,7 +211,6 @@ div.editwrapper {
 div.editwrapper h3 {
 	margin-top: 0;
 }
-
 
 
 </style>

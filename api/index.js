@@ -160,6 +160,12 @@ app.get('/user', async (req, res) => {
 		sql += ` and region = '${region}'`;
 	}
 
+	// get users from a specific departement?
+	if (req.query.departement) {
+		const departement = req.query.departement.slice(0, 2);
+		sql += ` and departement = '${departement}'`;
+	}
+
 	// get users from a specific guild?
 	if (req.query.guild) {
 		const guild = req.query.guild.split(' ')[0];
@@ -247,6 +253,14 @@ app.post('/userchange', upload.none(), async (req, res) => {
 
 app.get('/region', async (req, res) => {
 	const rows = await db.query('select region, count(*) as nb from users where state = "validated" group by region order by region');
+	const responseData = {};
+	responseData.rows = rows;
+	res.json(responseData);
+})
+
+
+app.get('/departement', async (req, res) => {
+	const rows = await db.query('select departement, count(*) as nb from users where state = "validated" and departement <> "" group by departement order by departement');
 	const responseData = {};
 	responseData.rows = rows;
 	res.json(responseData);
