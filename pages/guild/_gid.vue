@@ -30,7 +30,7 @@
 							<i v-if="row.adherent == 0" class="fas fa-certificate" style="color: red;"></i>
 						</td>
 						<td style="text-align:center">
-							<i @click="kick(row.mid, row.real_name)" v-if="row.adherent_until < today" class="fas fa-user-slash" style="color: red;" :title="'Déchoir ex-adhérent ('+ row.adherent_until.slice(0,10) +')'"></i>
+							<i @click="kick(row.mid, row.real_name)" v-if="row.adherent_until < today" class="fas fa-user-slash" style="color: red;" :title="'Supprimer ex-adhérent ('+ row.adherent_until.slice(0,10) +')'"></i>
 						</td>
 					</tr>
 				</tbody>
@@ -147,7 +147,7 @@ export default {
 		},
 
 		kick: async function(mid, name) {
-			if (! confirm("Etes-vous certain d'enlever la qualité d'adhérent de votre serveur Discord à " + name + ", membre " + mid + " ?")) {
+			if (! confirm("Etes-vous certain de vouloir supprimer l'adhérent " + name + ", ancien membre " + mid + " des serveurs Discord de Mensa ?")) {
 				return;
 			}
 
