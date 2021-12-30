@@ -88,7 +88,8 @@ async function getDataFromMensannuaire(mid) {
 	
 	// we check email well formed
 	if (! /\S+@\S+\.\S+/.test(email)) {
-		throw `Email ${email} not valid for user ${mid}`;
+		console.error(`Email ${email} not valid for user ${mid}`);
+		email = '';
 	}
 
 	// remove some un-necessary data
