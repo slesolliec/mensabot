@@ -8,6 +8,7 @@
 const needle  = require('needle');
 const cheerio = require('cheerio');
 const axios   = require('axios');
+const moment  = require('moment');
 const log     = require('./mods/log');
 const conf    = require('./configs');
 
@@ -15,7 +16,7 @@ const conf    = require('./configs');
 let cookies = {};
 
 async function getCookies() {
-	if (! cookies.lemonldap) {
+	if (! cookies || ! cookies.lemonldap) {
 		// we get the token
 		let resp = await needle("get","https://auth.mensa-france.net/");
 		let $ = cheerio.load(resp.body);
@@ -35,101 +36,6 @@ async function getCookies() {
 }
 
 
-async function checkIsMember(mid, name, region, email) {
-
-	await getCookies();
-
-	let adherent = null;
-
-	// search via email
-	let query = `recherche=(region:${region})(type_contact:mail)(contact:${email})(cotisation:oui)`;
-	console.log(query);
-	let resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = true;
-		}
-	});
-	if (adherent) { return true; }
-
-	// search via name
-	query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(cotisation:oui)`;
-	console.log(query);
-	resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = true;
-		}
-	});
-	if (adherent) { return true; }
-
-	// search via email
-	query = `recherche=(region:${region})(type_contact:mail)(contact:${email})(cotisation:non)`;
-	console.log(query);
-	resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = 'faux';
-		}
-	});
-	if (adherent == 'faux') { return false; }
-
-	// search via name
-	query = `recherche=(nom:${name.split(' ').slice(-1)[0]})(region:${region})(cotisation:non)`;
-	console.log(query);
-	resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = 'faux';
-		}
-	});
-	if (adherent == 'faux') { return false; }
-
-	// search via first name
-	query = `recherche=(prenom:${name.split(' ')[0]})(region:${region})(cotisation:oui)`;
-	console.log(query);
-	resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = true;
-		}
-	});
-	if (adherent) { return true; }
-
-	// search via first name
-	query = `recherche=(prenom:${name.split(' ')[0]})(region:${region})(cotisation:nom)`;
-	console.log(query);
-	resp = await needle("get", conf.web.url + query, {cookies});
-	$ = cheerio.load(resp.body);
-	$('#resultats tbody tr').each((i, el) => {
-		id = parseInt($(el).text().trim().split("\n")[0].trim());
-		console.log('id=', id);
-		if (id == mid) {
-			adherent = "faux";
-		}
-	});
-	if (adherent == "faux") { return false; }
-
-	return '2';
-}
-
-
-
 async function getDataFromMensannuaire(mid) {
 
 	await getCookies();
@@ -146,16 +52,52 @@ async function getDataFromMensannuaire(mid) {
     }       
 	let region = $('#identite').text().split("\n")[2].trim().split('-').slice(-1)[0].trim();
 	let email  = $('#contacts div.email a').text();
+	let birthdate = $('#identite div span').text().split("(")[0].trim().split(" ")[2].trim();
+	let [bday, bmonth, byear] = birthdate.split("/");
+	// to avoid SQL injections
+	bday   = bday.slice(0, 2);
+	bmonth = bmonth.slice(0, 2);
+	byear  = byear.slice(0, 4);
+	birthdate = byear +'-'+ bmonth +'-'+ bday;
 
+	let pays = $('#identite div span a').html().split("<br>").slice(-1)[0].trim().split(",").slice(-1)[0].trim();
+	let code_postal = null;
+	let departement = null;
+	if (pays.toUpperCase() == 'FRANCE') {
+		code_postal = $('#identite div span a').html().split("<br>").slice(-1)[0].split(" ")[0].slice(0,5);
+		if (parseInt(code_postal)) {
+			departement = code_postal.slice(0,-3);
+		} else {
+			code_postal = null;
+		}
+	}
+
+	let adherent_until = $('#fiche-perso table tbody tr td:nth-child(2)').html();
+	let [aday, amonth, ayear] = adherent_until.split("/");
+	// to avoid SQL injections
+	aday   = aday.slice(0, 2);
+	amonth = amonth.slice(0, 2);
+	ayear  = ayear.slice(0, 4);
+	adherent_until = ayear +'-'+ amonth +'-'+ aday;
+
+	let adherent = 0;
+
+	if (adherent_until > moment().format("YYYY-MM-DD")) {
+		adherent = 1;
+	}
+	
 	// we check email well formed
 	if (! /\S+@\S+\.\S+/.test(email)) {
 		throw `Email ${email} not valid for user ${mid}`;
 	}
 
-	// we check if still a member
-	const adherent = await checkIsMember(mid, name, region, email);
+	// remove some un-necessary data
+	name = name.replace('-information non publique-', '');
 
-	return {name, region, email, adherent};
+	let obj = {name, region, email, adherent, adherent_until, birthdate, code_postal, departement, pays};
+	console.log(obj);
+
+	return obj;
 }
 
 
@@ -182,53 +124,47 @@ findNewMensans = async function() {
 
 	while (noobs.length) {
 		const drWho = noobs.pop();
-		console.log("== WHO ==\n", drWho);
-		let found;
-		try {
-			found = await getDataFromMensannuaire(drWho.mid);
-			found.mid = drWho.mid;
-			// nan mais c'est quoi ce sexisme d'un autre age !!! ;-)
-			found.name = found.name
-				.replace('Monsieur ',     '')
-				.replace('Madame ',       '')
-				.replace('Mademoiselle ', '');
-		} catch (err) {
-			log.error("Failed visiting page of mensan member " + drWho.mid);
-			console.error(err);
-			continue;
-		}
-		console.log("== Found ==\n", found);
-		if ( ! found) {
-			found = { mid: drWho.mid, status: 404};
-		}
-
-		axios.post(conf.spider.url + '/api/spider', found, {
-			auth: {
-				username: 'spider',
-				password: conf.spider.password
-			}
-		});
+		await processMensan(drWho);
 	}
-
-
-	// console.log(unknowns);
 
 	while (unknowns.length) {
 		const drWho = unknowns.pop();
-		console.log("== WHO ==\n", drWho);
+		await processMensan(drWho);
+	}
+}
 
-		const adherent = await checkIsMember(drWho.mid, drWho.real_name, drWho.region, drWho.email);
-		console.log(drWho.real_name, 'is', adherent);
 
-		axios.post(conf.spider.url + '/api/spider', {mid: drWho.mid, adherent: adherent}, {
-			auth: {
-				username: 'spider',
-				password: conf.spider.password
-			}
-		});
+async function processMensan(drWho) {
+	// console.log("== WHO ==\n", drWho);
+	let found;
+	try {
+		found = await getDataFromMensannuaire(drWho.mid);
+		found.mid = drWho.mid;
+		// nan mais c'est quoi ce sexisme d'un autre age !!! ;-)
+		found.name = found.name
+			.replace('Monsieur ',     '')
+			.replace('Madame ',       '')
+			.replace('Mademoiselle ', '');
+	} catch (err) {
+		log.error("Failed visiting page of mensan member " + drWho.mid);
+		console.error(err);
+		return;
+	}
+	// console.log("== Found ==\n", found);
+	if ( ! found) {
+		found = { mid: drWho.mid, status: 404};
 	}
 
+	axios.post(conf.spider.url + '/api/spider', found, {
+		auth: {
+			username: 'spider',
+			password: conf.spider.password
+		}
+	});
+
 }
+
+
 
 
 // fillEmptyNames();

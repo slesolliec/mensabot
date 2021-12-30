@@ -626,7 +626,12 @@ app.get('/spider', async (req, res) => {
 			select mid, real_name, region, email
 			from users
 			where state='validated'
-			  and (adherent = 2 or adherent is null) `);
+			  and (
+					adherent = 2
+					or adherent is null
+					or adherent_until is null
+				--	or adherent_until < '` + moment().format('YYYY-MM-DD') +  `'
+				  ) `);
 	let unknowns = [];
 
 	while (getUnknowns.length) {
@@ -650,19 +655,36 @@ app.post('/spider', async (req, res) => {
 
 	console.log("noob=", noob);
 
+	db.query(`
+		update users
+		set adherent  = ?,
+			adherent_until = ?,
+			code_postal = ?,
+			departement = ?,
+			pays = ?,
+			birthdate = ?
+			where mid = ?`, [
+				noob.adherent,
+				noob.adherent_until,
+				noob.code_postal,
+				noob.departement,
+				noob.pays,
+				noob.birthdate,
+				noob.mid]
+	);
+
+
 	if (noob.region) {
 		db.query(`
 			update users
 			set real_name = ?,
 				region    = ?,
 				email     = ?,
-				adherent  = ?,
 				state='found'
 			where mid = ? and state = 'welcomed'`, [
 				noob.name,
 				noob.region,
 				noob.email,
-				noob.adherent,
 				noob.mid]);
 	} else {
 		if (noob.adherent != undefined) {
