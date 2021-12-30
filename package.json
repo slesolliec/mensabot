@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@nuxtjs/auth-next": "5.0.0-1618502945.2770f1f",
-    "@nuxtjs/axios": "^5.13.1",
+    "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/markdownit": "^2.0.0",
     "basic-auth": "^2.0.1",
     "cheerio": "^1.0.0-rc.5",
@@ -27,13 +27,13 @@
     "cookie-parser": "^1.4.5",
     "discord.js": "^12.2.0",
     "express": "^4.17.1",
-    "fs": "0.0.1-security",
+    "fs": "^0.0.2",
     "moment": "^2.26.0",
-    "multer": "^1.4.2",
+    "multer": "^1.4.3",
     "mysql": "^2.18.1",
     "needle": "^2.6.0",
-    "nodemailer": "^6.4.8",
-    "nuxt": "^2.15.4",
+    "nodemailer": "^6.6.5",
+    "nuxt": "^2.15.8",
     "nuxt-vue-multiselect": "^1.0.4"
   }
 }
