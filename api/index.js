@@ -36,7 +36,7 @@ async function checkAccess(req, res, next) {
 	}
 
 	// basic-auth for Spider
-	if (req.url == '/spider') {
+	if (req.url.slice(0,7) == '/spider') {
 		let spider = basicAuth(req);
 		if (!spider || !spider.name || !spider.pass) {
 			res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
@@ -646,16 +646,21 @@ app.get('/spider', async (req, res) => {
 	}
 
 	// we get users whose adherent status is null
-	const getUnknowns = await db.query(`
-			select mid, real_name, region, email
-			from users
-			where state='validated'
-			  and (
-					adherent = 2
-					or adherent is null
-					or adherent_until is null
-				--	or adherent_until < '` + moment().format('YYYY-MM-DD') +  `'
-				  ) `);
+	let sql = `
+		select mid, real_name, region, email
+		from users
+		where state='validated'
+		  and (
+				adherent is null
+				or adherent_until is null
+			) `;
+
+	// get old members to check if their last membership date has moved
+	if (req.query.outdated ) {
+		sql = sql.replace(")", "	or adherent_until < '" + moment().format('YYYY-MM-DD') +  "' )");
+	}
+
+	const getUnknowns = await db.query(sql);
 	let unknowns = [];
 
 	while (getUnknowns.length) {

@@ -105,8 +105,14 @@ async function getDataFromMensannuaire(mid) {
 /**
  * Takes users from state 'welcomed' to state 'found' or 'err_not_found'
  */
-findNewMensans = async function() {
-	let {data} = await axios.get(conf.spider.url + '/api/spider', {
+findNewMensans = async function(old = false) {
+	let url = conf.spider.url + '/api/spider';
+	if (old) {
+		url += '?outdated=1';
+	}
+
+	console.log("fetching", url);
+	let {data} = await axios.get(url, {
 		auth: {
 			username: 'spider',
 			password: conf.spider.password
@@ -133,6 +139,11 @@ findNewMensans = async function() {
 		await processMensan(drWho);
 	}
 }
+
+async function findOldMensans() {
+	await findNewMensans(1);
+}
+
 
 
 async function processMensan(drWho) {
@@ -171,5 +182,6 @@ async function processMensan(drWho) {
 // fillEmptyNames();
 
 setInterval(findNewMensans, 60 * 1000);
+setInterval(findOldMensans, 24 * 60 * 60 * 1000);
 
-findNewMensans();
+findOldMensans();
