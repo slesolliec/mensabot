@@ -29,6 +29,9 @@
 							<i v-if="row.adherent == 1" class="fas fa-certificate" style="color: green;"></i>
 							<i v-if="row.adherent == 0" class="fas fa-certificate" style="color: red;"></i>
 						</td>
+						<td style="text-align:center">
+							<i @click="kick(row.mid, row.real_name)" v-if="row.adherent_until < today" class="fas fa-user-slash" style="color: red;" :title="'Déchoir ex-adhérent ('+ row.adherent_until.slice(0,10) +')'"></i>
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -108,15 +111,17 @@
 </template>
 
 <script>
-
+const moment = require('moment');
 
 export default {
 
 	data() {
+
 		return {
 			guild: '',
 			rows: [],
-			unvalidateds: []
+			unvalidateds: [],
+			today: moment().format('YYYY-MM-DD')
 		}
 	},
 
@@ -139,7 +144,23 @@ export default {
 			await this.$axios.post('/api/userchange', bodyFormData);
 
 			this.getRows();
-		}
+		},
+
+		kick: async function(mid, name) {
+			if (! confirm("Etes-vous certain d'enlever la qualité d'adhérent de votre serveur Discord à " + name + ", membre " + mid + " ?")) {
+				return;
+			}
+
+			const bodyFormData = new FormData();
+			bodyFormData.append('action', 'kick');
+			bodyFormData.append('mid', mid);
+			bodyFormData.append('gid', this.guild);
+			await this.$axios.post('/api/userchange', bodyFormData);
+
+			this.getRows();
+		},
+
+
 
 	},
 

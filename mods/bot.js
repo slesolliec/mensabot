@@ -181,6 +181,39 @@ bot.welcome = async function() {
     db.query("update users set state = 'welcomed' where did = ?", [user.id]);
 }
 
+// kick users from all guilds, then delete user from database
+bot.kick = async function() {
+    // get one user to kick
+    const user = await db.getOne("select * from users where state = 'kick' limit 1", []);
+
+    if (! user) return;
+
+    // select all guilds of that user
+    const guilds = await db.query("select * from members where did = ?", [user.did]);
+
+    // we kick the user from all guilds it belongs to
+    for (const guild of guilds) {
+        console.log(guild.gid);
+        const disGuild = client.guilds.cache.get(guild.gid);
+        const disMember = disGuild.members.cache.get(user.did);
+        try {
+            await disMember.kick("Votre adhésion à Mensa n'est plus à jour. Au revoir.");
+        } catch (err) {
+            console.error("Impossible de kicker le membre", user.real_name, user.mid, moment(user.adherent_until).format('DD/MM/YYYY'), "de la guilde", disGuild.name, ':', err);
+            return;
+        }
+    }
+
+    // we erase the user from Mensabot db
+    db.query("delete from users where mid = ? limit 1", [user.mid]);
+    db.query("delete from tags where mid = ?", [user.mid]);
+    db.query("delete from members where did = ?", [user.did])
+
+    // kiss bye bye
+    const disUser = client.users.cache.get(user.did);
+    sendDirectMessage(disUser, "Votre adhésion à Mensa ayant expiré le "+ user.adherent_until +" je viens de vous supprimer des serveurs Discord de Mensa.");
+}
+
 
 /**
  * Sends message msg to user destUser. (with log)
@@ -510,7 +543,7 @@ async function giveRoleToMember(row) {
         return;
     }
     // console.log('=== The Role ===\n', discordRole);
-        
+    
     member.roles.add(discordRole)
         .then(() => {
             sendDirectMessage(member.user, "Je viens de vous donner le rôle **" + discordRole.name + "** sur le serveur **" + guild.name + "**");

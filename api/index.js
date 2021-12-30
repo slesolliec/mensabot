@@ -134,7 +134,7 @@ app.get('/stats', async (req, res) => {
 
 app.get('/user', async (req, res) => {
 	let sql = `
-		select mid, real_name, region, adherent, state,
+		select mid, adherent, real_name, region, state,
 			did, discord_name, discord_discriminator, discord_avatar,
 			length(presentation) as presentationLength
 		from users
@@ -170,6 +170,10 @@ app.get('/user', async (req, res) => {
 	if (req.query.guild) {
 		const guild = req.query.guild.split(' ')[0];
 		sql += ` and did in (select did from members where gid = '${guild}')`;
+
+		if (isGuildAdmin(guild, user.did)) {
+			sql = sql.replace('select mid, adherent,', 'select mid, adherent, adherent_until,');
+		}
 
 		// special case: unvalidated users for admins
 		if (req.query.unval == 'idated') {
@@ -244,6 +248,12 @@ app.post('/userchange', upload.none(), async (req, res) => {
 		// on remet le mec en "found"
 		const sql = `update users set state = 'found' where mid = ? and state = 'vcode_sent'`;
 		db.query(sql, [parseInt(req.body.mid)]);
+	}
+
+	if (req.body.action == 'kick') {
+		// on met le mec en "kick" si la date d'adhésion est dépassée
+		const sql = `update users set state = 'kick' where mid = ? and adherent_until < ?`;
+		db.query(sql, [parseInt(req.body.mid), moment().format('YYYY-MM-DD')]);
 	}
 
 	return res.sendStatus(200);
