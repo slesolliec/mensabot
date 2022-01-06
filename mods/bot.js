@@ -488,6 +488,7 @@ bot.promote = async function() {
     where guilds.gid = members.gid
       and members.did = users.did
       and members.state is null
+      and users.adherent = 1
       and users.state = 'validated'
       and guilds.mensan_role is not null
     `;
