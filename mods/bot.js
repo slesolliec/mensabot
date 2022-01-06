@@ -11,11 +11,11 @@ const bot = {};
 
 bot.isMaintenance = false;
 
-client.once('ready', () => {
+client.once('ready', async () => {
     log.debug('Bot is connected to Discord');
 
     // set all guilds to is_active = 0
-    db.query("update guilds set is_active = 0");
+    await db.query("update guilds set is_active = 0");
 
     // loop on my guilds
     client.guilds.cache.forEach(processOneGuild);
